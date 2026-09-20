@@ -71,11 +71,12 @@
 
       <p id="userEmail"></p>
 
-      <button id="testSaveButton">
-  Tesztadat mentése
-</button>
-
-<p id="saveStatus"></p>
+      <button id="importFoodsButton">
+        28 étel importálása
+      </button>
+      
+      <p id="saveStatus"></p>
+      
       <button id="logoutButton">
         Kijelentkezés
       </button>
@@ -96,13 +97,15 @@
       onAuthStateChanged
     }
       from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
-import {
-  getFirestore,
-  doc,
-  setDoc,
-  serverTimestamp
-}
-  from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+    
+    import {
+      getFirestore,
+      doc,
+      setDoc,
+      serverTimestamp,
+      collection
+    }
+      from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAt8wVFpHucCQLPo-t2d00ZMwyFbvyH7bU",
@@ -115,9 +118,9 @@ import {
 
 
     const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const provider = new GoogleAuthProvider();
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
 
 
     const status = document.getElementById("status");
@@ -127,7 +130,9 @@ const provider = new GoogleAuthProvider();
     const userName = document.getElementById("userName");
     const userEmail = document.getElementById("userEmail");
     const testSaveButton = document.getElementById("testSaveButton");
-const saveStatus = document.getElementById("saveStatus");
+    const saveStatus = document.getElementById("saveStatus");
+    const importFoodsButton = document.getElemenzById("importFoodsButton");
+    const importStatus = document.getElemenzById("importStatus");
 
     testSaveButton.addEventListener("click", async () => {
 
@@ -157,6 +162,63 @@ const saveStatus = document.getElementById("saveStatus");
     console.error(error);
     saveStatus.textContent =
       "Mentési hiba: " + error.message;
+
+  }
+
+});
+
+    importFoodsButton.addEventListener("click", async () => {
+
+  const user = auth.currentUser;
+
+  if (!user) {
+    importStatus.textContent = "Előbb jelentkezz be.";
+    return;
+  }
+
+  importFoodsButton.disabled = true;
+  importStatus.textContent = "Importálás folyamatban...";
+
+  try {
+
+    const response = await fetch("./etelek-import.json");
+
+    if (!response.ok) {
+      throw new Error("Az importfájl nem tölthető be.");
+    }
+
+    const foods = await response.json();
+
+    let imported = 0;
+
+    for (const food of foods) {
+
+      const foodRef = doc(collection(db, "foods"));
+
+      await setDoc(foodRef, {
+        ...food,
+        createdAt: serverTimestamp(),
+        createdBy: user.uid
+      });
+
+      imported++;
+      importStatus.textContent =
+        ${imported} / ${foods.length} étel importálva...;
+    }
+
+    importStatus.textContent =
+      Sikeres import ✓ ${imported} étel bekerült.;
+
+  } catch (error) {
+
+    console.error(error);
+
+    importStatus.textContent =
+      "Importálási hiba: " + error.message;
+
+  } finally {
+
+    importFoodsButton.disabled = false;
 
   }
 
