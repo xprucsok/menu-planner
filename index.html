@@ -3,16 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>Tóthék Menütervezője</title>
 
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       font-family: Arial, sans-serif;
-      max-width: 600px;
+      max-width: 700px;
       margin: 0 auto;
-      padding: 30px 20px;
+      padding: 24px 16px 60px;
       background: #f7f7f7;
       color: #222;
+    }
+
+    h1 {
+      margin-top: 0;
+    }
+
+    h2 {
+      margin-bottom: 4px;
     }
 
     .card {
@@ -37,57 +50,128 @@
       color: white;
     }
 
-    #importFoodsButton {
-      background: #222;
-      color: white;
-    }
-
     #logoutButton {
       background: #eee;
       color: #222;
-    }
-
-    #userInfo {
-      margin-top: 20px;
+      margin-top: 30px;
     }
 
     .hidden {
       display: none;
+    }
+
+    .sectionHeader {
+      margin-bottom: 20px;
+    }
+
+    #foodCount {
+      color: #666;
+      margin-top: 4px;
+    }
+
+    #foodList {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .foodCard {
+      background: white;
+      padding: 18px;
+      border-radius: 14px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    }
+
+    .foodName {
+      font-size: 19px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .foodMeta {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .tag {
+      background: #f0f0f0;
+      padding: 6px 9px;
+      border-radius: 999px;
+      font-size: 13px;
+    }
+
+    #loadingFoods {
+      color: #666;
+    }
+
+    #foodError {
+      background: #fff0f0;
+      padding: 12px;
+      border-radius: 10px;
+    }
+
+    .userBar {
+      font-size: 13px;
+      color: #777;
+      margin-bottom: 24px;
     }
   </style>
 </head>
 
 <body>
 
-  <div class="card">
+  <!-- BEJELENTKEZÉS -->
+
+  <div id="loginView" class="card">
+
     <h1>Tóthék Menütervezője</h1>
 
-    <p id="status">Bejelentkezés ellenőrzése...</p>
+    <p id="status">
+      Bejelentkezés ellenőrzése...
+    </p>
 
     <button id="loginButton" class="hidden">
       Belépés Google-lel
     </button>
 
-    <div id="userInfo" class="hidden">
+  </div>
 
-      <p>
-        Bejelentkezve:
-        <strong id="userName"></strong>
-      </p>
 
-      <p id="userEmail"></p>
+  <!-- ALKALMAZÁS -->
 
-      <button id="importFoodsButton">
-        28 étel importálása
-      </button>
+  <div id="appView" class="hidden">
 
-      <p id="importStatus"></p>
+    <h1>Tóthék Menütervezője</h1>
 
-      <button id="logoutButton">
-        Kijelentkezés
-      </button>
-
+    <div class="userBar">
+      Bejelentkezve:
+      <span id="userName"></span>
     </div>
+
+    <div class="sectionHeader">
+      <h2>Ételek</h2>
+      <p id="foodCount"></p>
+    </div>
+
+    <p id="loadingFoods">
+      Ételek betöltése...
+    </p>
+
+    <p id="foodError" class="hidden"></p>
+
+    <div id="foodList"></div>
+
+    <button id="logoutButton">
+      Kijelentkezés
+    </button>
+
   </div>
 
 
@@ -107,10 +191,8 @@
 
     import {
       getFirestore,
-      doc,
-      setDoc,
-      serverTimestamp,
-      collection
+      collection,
+      getDocs
     }
       from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
@@ -131,114 +213,233 @@
     const provider = new GoogleAuthProvider();
 
 
-    const status = document.getElementById("status");
-    const loginButton = document.getElementById("loginButton");
-    const logoutButton = document.getElementById("logoutButton");
-    const userInfo = document.getElementById("userInfo");
-    const userName = document.getElementById("userName");
-    const userEmail = document.getElementById("userEmail");
-    const importFoodsButton = document.getElementById("importFoodsButton");
-    const importStatus = document.getElementById("importStatus");
+    const loginView =
+      document.getElementById("loginView");
 
+    const appView =
+      document.getElementById("appView");
 
-    importFoodsButton.addEventListener("click", async () => {
+    const status =
+      document.getElementById("status");
 
-      const user = auth.currentUser;
+    const loginButton =
+      document.getElementById("loginButton");
 
-      if (!user) {
-        importStatus.textContent = "Előbb jelentkezz be.";
-        return;
-      }
+    const logoutButton =
+      document.getElementById("logoutButton");
 
-      importFoodsButton.disabled = true;
-      importStatus.textContent = "Importálás folyamatban...";
+    const userName =
+      document.getElementById("userName");
 
-      try {
+    const foodCount =
+      document.getElementById("foodCount");
 
-        const response = await fetch("./etelek-import.json");
+    const foodList =
+      document.getElementById("foodList");
 
-        if (!response.ok) {
-          throw new Error("Az importfájl nem tölthető be.");
-        }
+    const loadingFoods =
+      document.getElementById("loadingFoods");
 
-        const foods = await response.json();
-
-        let imported = 0;
-
-        for (const food of foods) {
-
-          const foodRef = doc(collection(db, "foods"));
-
-          await setDoc(foodRef, {
-            ...food,
-            createdAt: serverTimestamp(),
-            createdBy: user.uid
-          });
-
-          imported++;
-
-          importStatus.textContent =
-            `${imported} / ${foods.length} étel importálva...`;
-        }
-
-        importStatus.textContent =
-          `Sikeres import ✓ ${imported} étel bekerült.`;
-
-        importFoodsButton.disabled = true;
-
-      } catch (error) {
-
-        console.error(error);
-
-        importStatus.textContent =
-          "Importálási hiba: " + error.message;
-
-        importFoodsButton.disabled = false;
-      }
-
-    });
+    const foodError =
+      document.getElementById("foodError");
 
 
     loginButton.addEventListener("click", async () => {
 
       try {
+
         await signInWithPopup(auth, provider);
+
       } catch (error) {
+
         console.error(error);
+
         status.textContent =
-          "A bejelentkezés nem sikerült: " + error.message;
+          "A bejelentkezés nem sikerült: " +
+          error.message;
+
       }
 
     });
 
 
     logoutButton.addEventListener("click", async () => {
+
       await signOut(auth);
+
     });
 
 
-    onAuthStateChanged(auth, (user) => {
+    async function loadFoods() {
+
+      foodList.innerHTML = "";
+      foodCount.textContent = "";
+
+      loadingFoods.classList.remove("hidden");
+      foodError.classList.add("hidden");
+
+      try {
+
+        const snapshot =
+          await getDocs(collection(db, "foods"));
+
+        const foods = [];
+
+        snapshot.forEach((document) => {
+
+          foods.push({
+            id: document.id,
+            ...document.data()
+          });
+
+        });
+
+
+        const activeFoods =
+          foods.filter(food => food.active !== false);
+
+
+        activeFoods.sort((a, b) =>
+          (a.name || "").localeCompare(
+            b.name || "",
+            "hu"
+          )
+        );
+
+
+        foodCount.textContent =
+          `${activeFoods.length} étel`;
+
+
+        for (const food of activeFoods) {
+
+          const card =
+            document.createElement("div");
+
+          card.className = "foodCard";
+
+
+          const name =
+            document.createElement("div");
+
+          name.className = "foodName";
+
+          name.textContent =
+            food.name || "Névtelen étel";
+
+          card.appendChild(name);
+
+
+          const meta =
+            document.createElement("div");
+
+          meta.className = "foodMeta";
+
+
+          const types =
+            Array.isArray(food.type)
+              ? food.type.join(", ")
+              : (food.type || "");
+
+
+          const applicability =
+            food.applicability || "";
+
+
+          const metaParts = [];
+
+          if (types) {
+            metaParts.push(types);
+          }
+
+          if (applicability) {
+            metaParts.push(applicability);
+          }
+
+
+          meta.textContent =
+            metaParts.join(" • ");
+
+          card.appendChild(meta);
+
+
+          if (
+            Array.isArray(food.tags) &&
+            food.tags.length > 0
+          ) {
+
+            const tags =
+              document.createElement("div");
+
+            tags.className = "tags";
+
+
+            for (const tagText of food.tags) {
+
+              const tag =
+                document.createElement("span");
+
+              tag.className = "tag";
+              tag.textContent = tagText;
+
+              tags.appendChild(tag);
+
+            }
+
+            card.appendChild(tags);
+
+          }
+
+
+          foodList.appendChild(card);
+
+        }
+
+
+        loadingFoods.classList.add("hidden");
+
+
+      } catch (error) {
+
+        console.error(error);
+
+        loadingFoods.classList.add("hidden");
+
+        foodError.textContent =
+          "Az ételek betöltése nem sikerült: " +
+          error.message;
+
+        foodError.classList.remove("hidden");
+
+      }
+
+    }
+
+
+    onAuthStateChanged(auth, async (user) => {
 
       if (user) {
 
-        status.textContent = "Sikeres bejelentkezés ✓";
+        loginView.classList.add("hidden");
+        appView.classList.remove("hidden");
 
         userName.textContent =
-          user.displayName || "Felhasználó";
+          user.displayName ||
+          user.email ||
+          "Felhasználó";
 
-        userEmail.textContent =
-          user.email || "";
+        await loadFoods();
 
-        loginButton.classList.add("hidden");
-        userInfo.classList.remove("hidden");
 
       } else {
+
+        appView.classList.add("hidden");
+        loginView.classList.remove("hidden");
 
         status.textContent =
           "A menütervező használatához jelentkezz be.";
 
         loginButton.classList.remove("hidden");
-        userInfo.classList.add("hidden");
 
       }
 
