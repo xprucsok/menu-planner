@@ -71,6 +71,11 @@
 
       <p id="userEmail"></p>
 
+      <button id="testSaveButton">
+  Tesztadat mentése
+</button>
+
+<p id="saveStatus"></p>
       <button id="logoutButton">
         Kijelentkezés
       </button>
@@ -91,7 +96,13 @@
       onAuthStateChanged
     }
       from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
-
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  serverTimestamp
+}
+  from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAt8wVFpHucCQLPo-t2d00ZMwyFbvyH7bU",
@@ -104,8 +115,9 @@
 
 
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
 
 
     const status = document.getElementById("status");
@@ -114,6 +126,41 @@
     const userInfo = document.getElementById("userInfo");
     const userName = document.getElementById("userName");
     const userEmail = document.getElementById("userEmail");
+    const testSaveButton = document.getElementById("testSaveButton");
+const saveStatus = document.getElementById("saveStatus");
+
+    testSaveButton.addEventListener("click", async () => {
+
+  const user = auth.currentUser;
+
+  if (!user) {
+    saveStatus.textContent = "Nincs bejelentkezett felhasználó.";
+    return;
+  }
+
+  try {
+
+    await setDoc(
+      doc(db, "users", user.uid),
+      {
+        name: user.displayName || "",
+        email: user.email || "",
+        lastLogin: serverTimestamp()
+      },
+      { merge: true }
+    );
+
+    saveStatus.textContent = "Tesztadat sikeresen elmentve ✓";
+
+  } catch (error) {
+
+    console.error(error);
+    saveStatus.textContent =
+      "Mentési hiba: " + error.message;
+
+  }
+
+});
 
 
     loginButton.addEventListener("click", async () => {
