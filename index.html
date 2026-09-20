@@ -4,9 +4,158 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tóthék Menütervezője</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 30px 20px;
+      background: #f7f7f7;
+      color: #222;
+    }
+
+    .card {
+      background: white;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 15px;
+      border: 0;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    #loginButton {
+      background: #222;
+      color: white;
+    }
+
+    #logoutButton {
+      background: #eee;
+      color: #222;
+    }
+
+    #userInfo {
+      margin-top: 20px;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
 </head>
+
 <body>
-  <h1>Tóthék Menütervezője</h1>
-  <p>Az alkalmazás működik! 🎉</p>
+
+  <div class="card">
+    <h1>Tóthék Menütervezője</h1>
+
+    <p id="status">Bejelentkezés ellenőrzése...</p>
+
+    <button id="loginButton" class="hidden">
+      Belépés Google-lel
+    </button>
+
+    <div id="userInfo" class="hidden">
+      <p>
+        Bejelentkezve:
+        <strong id="userName"></strong>
+      </p>
+
+      <p id="userEmail"></p>
+
+      <button id="logoutButton">
+        Kijelentkezés
+      </button>
+    </div>
+  </div>
+
+
+  <script type="module">
+
+    import { initializeApp }
+      from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      signInWithPopup,
+      signOut,
+      onAuthStateChanged
+    }
+      from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAt8wVFpHucCQLPo-t2d00ZMwyFbvyH7bU",
+      authDomain: "tothek-menu-tervezoje.firebaseapp.com",
+      projectId: "tothek-menu-tervezoje",
+      storageBucket: "tothek-menu-tervezoje.firebasestorage.app",
+      messagingSenderId: "1012170993174",
+      appId: "1:1012170993174:web:b2c97bc683bc7f149b0f37"
+    };
+
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+
+    const status = document.getElementById("status");
+    const loginButton = document.getElementById("loginButton");
+    const logoutButton = document.getElementById("logoutButton");
+    const userInfo = document.getElementById("userInfo");
+    const userName = document.getElementById("userName");
+    const userEmail = document.getElementById("userEmail");
+
+
+    loginButton.addEventListener("click", async () => {
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (error) {
+        console.error(error);
+        status.textContent = "A bejelentkezés nem sikerült: " + error.message;
+      }
+    });
+
+
+    logoutButton.addEventListener("click", async () => {
+      await signOut(auth);
+    });
+
+
+    onAuthStateChanged(auth, (user) => {
+
+      if (user) {
+        status.textContent = "Sikeres bejelentkezés ✓";
+
+        userName.textContent =
+          user.displayName || "Felhasználó";
+
+        userEmail.textContent =
+          user.email || "";
+
+        loginButton.classList.add("hidden");
+        userInfo.classList.remove("hidden");
+
+      } else {
+        status.textContent =
+          "A menütervező használatához jelentkezz be.";
+
+        loginButton.classList.remove("hidden");
+        userInfo.classList.add("hidden");
+      }
+
+    });
+
+  </script>
+
 </body>
 </html>
