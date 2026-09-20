@@ -15,7 +15,7 @@
       font-family: Arial, sans-serif;
       max-width: 700px;
       margin: 0 auto;
-      padding: 24px 16px 60px;
+      padding: 24px 16px 100px;
       background: #f7f7f7;
       color: #222;
     }
@@ -63,6 +63,47 @@
     .sectionHeader {
       margin-bottom: 20px;
     }
+
+    .userBar {
+      font-size: 13px;
+      color: #777;
+      margin-bottom: 24px;
+    }
+
+    /* MENÜ */
+
+    .menuWeek {
+      margin-bottom: 28px;
+    }
+
+    .weekTitle {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .dayCard {
+      background: white;
+      padding: 16px 18px;
+      margin-bottom: 8px;
+      border-radius: 14px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+    }
+
+    .dayName {
+      font-weight: bold;
+    }
+
+    .dayFood {
+      color: #888;
+      text-align: right;
+    }
+
+    /* ÉTELEK */
 
     #foodCount {
       color: #666;
@@ -117,46 +158,7 @@
       border-radius: 10px;
     }
 
-    .userBar {
-      font-size: 13px;
-      color: #777;
-      margin-bottom: 24px;
-    }
-
-    body {
-      padding-bottom: 100px;
-    }
-
-    .menuWeek {
-      margin-bottom: 28px;
-    }
-
-    .weekTitle {
-      font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-
-    .dayCard {
-      background: white;
-      padding: 16px 18px;
-      margin-bottom: 8px;
-      border-radius: 14px;
-      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 15px;
-    }
-
-    .dayName {
-      font-weight: bold;
-    }
-
-    .dayFood {
-      color: #888;
-      text-align: right;
-    }
+    /* ALSÓ NAVIGÁCIÓ */
 
     .bottomNav {
       position: fixed;
@@ -197,7 +199,6 @@
       font-size: 22px;
       margin-bottom: 3px;
     }
-    
   </style>
 </head>
 
@@ -260,126 +261,6 @@
       </p>
 
       <p id="foodError" class="hidden"></p>
-
-      const menuView =
-      document.getElementById("menuView");
-
-    const foodsView =
-      document.getElementById("foodsView");
-
-    const menuNavButton =
-      document.getElementById("menuNavButton");
-
-    const foodsNavButton =
-      document.getElementById("foodsNavButton");
-
-    const menuWeeks =
-      document.getElementById("menuWeeks");
-
-      const dayNames = [
-      "Hétfő",
-      "Kedd",
-      "Szerda",
-      "Csütörtök",
-      "Péntek",
-      "Szombat",
-      "Vasárnap"
-    ];
-
-
-    function createMenu() {
-
-      menuWeeks.innerHTML = "";
-
-      for (let week = 1; week <= 3; week++) {
-
-        const weekElement =
-          document.createElement("div");
-
-        weekElement.className = "menuWeek";
-
-
-        const title =
-          document.createElement("div");
-
-        title.className = "weekTitle";
-        title.textContent = ${week}. hét;
-
-        weekElement.appendChild(title);
-
-
-        for (const day of dayNames) {
-
-          const dayCard =
-            document.createElement("div");
-
-          dayCard.className = "dayCard";
-
-
-          const dayName =
-            document.createElement("div");
-
-          dayName.className = "dayName";
-          dayName.textContent = day;
-
-
-          const dayFood =
-            document.createElement("div");
-
-          dayFood.className = "dayFood";
-          dayFood.textContent = "Nincs tervezve";
-
-
-          dayCard.appendChild(dayName);
-          dayCard.appendChild(dayFood);
-
-          weekElement.appendChild(dayCard);
-
-        }
-
-
-        menuWeeks.appendChild(weekElement);
-
-      }
-
-    }
-
-
-    function showMenu() {
-
-      menuView.classList.remove("hidden");
-      foodsView.classList.add("hidden");
-
-      menuNavButton.classList.add("active");
-      foodsNavButton.classList.remove("active");
-
-    }
-
-
-    function showFoods() {
-
-      menuView.classList.add("hidden");
-      foodsView.classList.remove("hidden");
-
-      menuNavButton.classList.remove("active");
-      foodsNavButton.classList.add("active");
-
-    }
-
-
-    menuNavButton.addEventListener(
-      "click",
-      showMenu
-    );
-
-
-    foodsNavButton.addEventListener(
-      "click",
-      showFoods
-    );
-
-
-    createMenu();
 
       <div id="foodList"></div>
 
@@ -454,6 +335,8 @@
     const provider = new GoogleAuthProvider();
 
 
+    /* ELEMEK */
+
     const loginView =
       document.getElementById("loginView");
 
@@ -472,6 +355,21 @@
     const userName =
       document.getElementById("userName");
 
+    const menuView =
+      document.getElementById("menuView");
+
+    const foodsView =
+      document.getElementById("foodsView");
+
+    const menuNavButton =
+      document.getElementById("menuNavButton");
+
+    const foodsNavButton =
+      document.getElementById("foodsNavButton");
+
+    const menuWeeks =
+      document.getElementById("menuWeeks");
+
     const foodCount =
       document.getElementById("foodCount");
 
@@ -485,31 +383,114 @@
       document.getElementById("foodError");
 
 
-    loginButton.addEventListener("click", async () => {
+    /* MENÜ */
 
-      try {
+    const dayNames = [
+      "Hétfő",
+      "Kedd",
+      "Szerda",
+      "Csütörtök",
+      "Péntek",
+      "Szombat",
+      "Vasárnap"
+    ];
 
-        await signInWithPopup(auth, provider);
 
-      } catch (error) {
+    function createMenu() {
 
-        console.error(error);
+      menuWeeks.innerHTML = "";
 
-        status.textContent =
-          "A bejelentkezés nem sikerült: " +
-          error.message;
+      for (let week = 1; week <= 3; week++) {
+
+        const weekElement =
+          document.createElement("div");
+
+        weekElement.className = "menuWeek";
+
+
+        const title =
+          document.createElement("div");
+
+        title.className = "weekTitle";
+        title.textContent = `${week}. hét`;
+
+        weekElement.appendChild(title);
+
+
+        for (const day of dayNames) {
+
+          const dayCard =
+            document.createElement("div");
+
+          dayCard.className = "dayCard";
+
+
+          const dayName =
+            document.createElement("div");
+
+          dayName.className = "dayName";
+          dayName.textContent = day;
+
+
+          const dayFood =
+            document.createElement("div");
+
+          dayFood.className = "dayFood";
+          dayFood.textContent = "Nincs tervezve";
+
+
+          dayCard.appendChild(dayName);
+          dayCard.appendChild(dayFood);
+
+          weekElement.appendChild(dayCard);
+
+        }
+
+
+        menuWeeks.appendChild(weekElement);
 
       }
 
-    });
+    }
 
 
-    logoutButton.addEventListener("click", async () => {
+    /* NAVIGÁCIÓ */
 
-      await signOut(auth);
+    function showMenu() {
 
-    });
+      menuView.classList.remove("hidden");
+      foodsView.classList.add("hidden");
 
+      menuNavButton.classList.add("active");
+      foodsNavButton.classList.remove("active");
+
+    }
+
+
+    function showFoods() {
+
+      menuView.classList.add("hidden");
+      foodsView.classList.remove("hidden");
+
+      menuNavButton.classList.remove("active");
+      foodsNavButton.classList.add("active");
+
+    }
+
+
+    menuNavButton.addEventListener(
+      "click",
+      showMenu
+    );
+
+
+    foodsNavButton.addEventListener(
+      "click",
+      showFoods
+    );
+
+
+    /* ÉTELEK */
 
     async function loadFoods() {
 
@@ -564,7 +545,6 @@
             document.createElement("div");
 
           name.className = "foodName";
-
           name.textContent =
             food.name || "Névtelen étel";
 
@@ -657,6 +637,34 @@
     }
 
 
+    /* BEJELENTKEZÉS */
+
+    loginButton.addEventListener("click", async () => {
+
+      try {
+
+        await signInWithPopup(auth, provider);
+
+      } catch (error) {
+
+        console.error(error);
+
+        status.textContent =
+          "A bejelentkezés nem sikerült: " +
+          error.message;
+
+      }
+
+    });
+
+
+    logoutButton.addEventListener("click", async () => {
+
+      await signOut(auth);
+
+    });
+
+
     onAuthStateChanged(auth, async (user) => {
 
       if (user) {
@@ -668,6 +676,9 @@
           user.displayName ||
           user.email ||
           "Felhasználó";
+
+        createMenu();
+        showMenu();
 
         await loadFoods();
 
