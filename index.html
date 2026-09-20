@@ -122,6 +122,82 @@
       color: #777;
       margin-bottom: 24px;
     }
+
+    body {
+      padding-bottom: 100px;
+    }
+
+    .menuWeek {
+      margin-bottom: 28px;
+    }
+
+    .weekTitle {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .dayCard {
+      background: white;
+      padding: 16px 18px;
+      margin-bottom: 8px;
+      border-radius: 14px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+    }
+
+    .dayName {
+      font-weight: bold;
+    }
+
+    .dayFood {
+      color: #888;
+      text-align: right;
+    }
+
+    .bottomNav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid #ddd;
+      display: flex;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .bottomNavInner {
+      width: 100%;
+      max-width: 700px;
+      display: flex;
+    }
+
+    .navButton {
+      flex: 1;
+      width: auto;
+      margin: 0;
+      padding: 14px 8px;
+      border-radius: 0;
+      background: white;
+      color: #777;
+      font-size: 14px;
+    }
+
+    .navButton.active {
+      color: #222;
+      font-weight: bold;
+    }
+
+    .navIcon {
+      display: block;
+      font-size: 22px;
+      margin-bottom: 3px;
+    }
+    
   </style>
 </head>
 
@@ -155,22 +231,187 @@
       <span id="userName"></span>
     </div>
 
-    <div class="sectionHeader">
-      <h2>Ételek</h2>
-      <p id="foodCount"></p>
+
+    <!-- MENÜ -->
+
+    <div id="menuView">
+
+      <div class="sectionHeader">
+        <h2>Menü</h2>
+        <p>3 hetes terv</p>
+      </div>
+
+      <div id="menuWeeks"></div>
+
     </div>
 
-    <p id="loadingFoods">
-      Ételek betöltése...
-    </p>
 
-    <p id="foodError" class="hidden"></p>
+    <!-- ÉTELEK -->
 
-    <div id="foodList"></div>
+    <div id="foodsView" class="hidden">
+
+      <div class="sectionHeader">
+        <h2>Ételek</h2>
+        <p id="foodCount"></p>
+      </div>
+
+      <p id="loadingFoods">
+        Ételek betöltése...
+      </p>
+
+      <p id="foodError" class="hidden"></p>
+
+      const menuView =
+      document.getElementById("menuView");
+
+    const foodsView =
+      document.getElementById("foodsView");
+
+    const menuNavButton =
+      document.getElementById("menuNavButton");
+
+    const foodsNavButton =
+      document.getElementById("foodsNavButton");
+
+    const menuWeeks =
+      document.getElementById("menuWeeks");
+
+      const dayNames = [
+      "Hétfő",
+      "Kedd",
+      "Szerda",
+      "Csütörtök",
+      "Péntek",
+      "Szombat",
+      "Vasárnap"
+    ];
+
+
+    function createMenu() {
+
+      menuWeeks.innerHTML = "";
+
+      for (let week = 1; week <= 3; week++) {
+
+        const weekElement =
+          document.createElement("div");
+
+        weekElement.className = "menuWeek";
+
+
+        const title =
+          document.createElement("div");
+
+        title.className = "weekTitle";
+        title.textContent = ${week}. hét;
+
+        weekElement.appendChild(title);
+
+
+        for (const day of dayNames) {
+
+          const dayCard =
+            document.createElement("div");
+
+          dayCard.className = "dayCard";
+
+
+          const dayName =
+            document.createElement("div");
+
+          dayName.className = "dayName";
+          dayName.textContent = day;
+
+
+          const dayFood =
+            document.createElement("div");
+
+          dayFood.className = "dayFood";
+          dayFood.textContent = "Nincs tervezve";
+
+
+          dayCard.appendChild(dayName);
+          dayCard.appendChild(dayFood);
+
+          weekElement.appendChild(dayCard);
+
+        }
+
+
+        menuWeeks.appendChild(weekElement);
+
+      }
+
+    }
+
+
+    function showMenu() {
+
+      menuView.classList.remove("hidden");
+      foodsView.classList.add("hidden");
+
+      menuNavButton.classList.add("active");
+      foodsNavButton.classList.remove("active");
+
+    }
+
+
+    function showFoods() {
+
+      menuView.classList.add("hidden");
+      foodsView.classList.remove("hidden");
+
+      menuNavButton.classList.remove("active");
+      foodsNavButton.classList.add("active");
+
+    }
+
+
+    menuNavButton.addEventListener(
+      "click",
+      showMenu
+    );
+
+
+    foodsNavButton.addEventListener(
+      "click",
+      showFoods
+    );
+
+
+    createMenu();
+
+      <div id="foodList"></div>
+
+    </div>
+
 
     <button id="logoutButton">
       Kijelentkezés
     </button>
+
+
+    <!-- ALSÓ NAVIGÁCIÓ -->
+
+    <div class="bottomNav">
+
+      <div class="bottomNavInner">
+
+        <button id="menuNavButton"
+                class="navButton active">
+          <span class="navIcon">📅</span>
+          Menü
+        </button>
+
+        <button id="foodsNavButton"
+                class="navButton">
+          <span class="navIcon">🍲</span>
+          Ételek
+        </button>
+
+      </div>
+
+    </div>
 
   </div>
 
