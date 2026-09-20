@@ -199,6 +199,54 @@
       font-size: 22px;
       margin-bottom: 3px;
     }
+
+    .foodPicker {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+}
+
+.foodPicker.hidden {
+  display: none;
+}
+
+.foodPickerContent {
+  background: white;
+  width: 100%;
+  max-height: 75vh;
+  border-radius: 20px 20px 0 0;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.foodPickerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 20px;
+  margin-bottom: 15px;
+}
+
+#closeFoodPicker {
+  width: auto;
+  margin: 0;
+  padding: 8px 12px;
+  background: #eee;
+}
+
+.foodPickerItem {
+  padding: 15px 4px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.foodPickerItem:last-child {
+  border-bottom: 0;
+}
+
   </style>
 </head>
 
@@ -270,6 +318,21 @@
     <button id="logoutButton">
       Kijelentkezés
     </button>
+
+    <div id="foodPicker" class="foodPicker hidden">
+
+  <div class="foodPickerContent">
+
+    <div class="foodPickerHeader">
+      <strong>Mit együnk?</strong>
+      <button id="closeFoodPicker">✕</button>
+    </div>
+
+    <div id="foodPickerList"></div>
+
+  </div>
+
+</div>
 
 
     <!-- ALSÓ NAVIGÁCIÓ -->
@@ -382,6 +445,19 @@
     const foodError =
       document.getElementById("foodError");
 
+    let availableFoods = [];
+
+    const foodPicker =
+      document.getElementById("foodPicker");
+    
+    const foodPickerList =
+      document.getElementById("foodPickerList");
+    
+    const closeFoodPicker =
+      document.getElementById("closeFoodPicker");
+    
+    let selectedDayFoodElement = null;
+
 
     /* MENÜ */
 
@@ -394,6 +470,40 @@
       "Szombat",
       "Vasárnap"
     ];
+
+    function openFoodPicker(dayFoodElement) {
+
+  selectedDayFoodElement = dayFoodElement;
+  foodPickerList.innerHTML = "";
+
+  for (const food of availableFoods) {
+
+    const item =
+      document.createElement("div");
+
+    item.className = "foodPickerItem";
+    item.textContent = food.name;
+
+    item.addEventListener("click", () => {
+
+      selectedDayFoodElement.textContent =
+        food.name;
+
+      foodPicker.classList.add("hidden");
+
+    });
+
+    foodPickerList.appendChild(item);
+
+  }
+
+  foodPicker.classList.remove("hidden");
+}
+
+
+closeFoodPicker.addEventListener("click", () => {
+  foodPicker.classList.add("hidden");
+});
 
 
     function createMenu() {
@@ -441,6 +551,10 @@
 
           dayCard.appendChild(dayName);
           dayCard.appendChild(dayFood);
+          
+          dayCard.addEventListener("click", () => {
+            openFoodPicker(dayFood);
+          });
 
           weekElement.appendChild(dayCard);
 
@@ -519,6 +633,7 @@
 
         const activeFoods =
           foods.filter(food => food.active !== false);
+        availableFoods = activeFoods;
 
 
         activeFoods.sort((a, b) =>
