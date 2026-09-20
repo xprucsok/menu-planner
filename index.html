@@ -590,13 +590,13 @@ closeFoodPicker.addEventListener("click", () => {
 
     if (week === 0) {
       title.textContent =
-        Ezen a héten · ${startText} – ${endText};
+        'Ezen a héten · ${startText} – ${endText}';
     } else if (week === 1) {
       title.textContent =
-        Jövő héten · ${startText} – ${endText};
+        'Jövő héten · ${startText} – ${endText}';
     } else {
       title.textContent =
-        ${startText} – ${endText};
+        '${startText} – ${endText}';
     }
 
 
@@ -664,7 +664,7 @@ closeFoodPicker.addEventListener("click", () => {
         dayCard.classList.add("today");
 
         dayName.textContent =
-          ${dayNames[day]} · MA;
+          '${dayNames[day]} · MA';
 
       }
 
