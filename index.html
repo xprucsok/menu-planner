@@ -31,7 +31,8 @@
 
     button,
     input,
-    textarea {
+    textarea,
+    select {
       font: inherit;
     }
 
@@ -108,6 +109,10 @@
       color: #8a3030;
     }
 
+    .fullButton {
+      width: 100%;
+    }
+
 
     /* MENÜ */
 
@@ -161,7 +166,7 @@
       color: #222;
       font-weight: 600;
       line-height: 1.35;
-      margin-bottom: 5px;
+      margin-bottom: 7px;
     }
 
     .dayFoodLine:last-child {
@@ -174,6 +179,14 @@
       font-size: 11px;
       font-weight: normal;
       margin-top: 1px;
+    }
+
+    .dayFreezer {
+      display: block;
+      color: #35728a;
+      font-size: 11px;
+      font-weight: normal;
+      margin-top: 2px;
     }
 
     .dayCard.today {
@@ -200,21 +213,27 @@
 
     /* ÉTELEK */
 
-    #foodCount {
+    #foodCount,
+    #freezerCount {
       color: #666;
     }
 
-    #foodList {
+    #foodList,
+    #freezerList {
       display: flex;
       flex-direction: column;
       gap: 12px;
     }
 
-    .foodCard {
+    .foodCard,
+    .freezerCard {
       background: white;
       padding: 18px;
       border-radius: 14px;
       box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    }
+
+    .foodCard {
       cursor: pointer;
     }
 
@@ -222,20 +241,33 @@
       opacity: 0.55;
     }
 
-    .foodName {
+    .foodName,
+    .freezerName {
       font-size: 19px;
       font-weight: bold;
       margin-bottom: 7px;
     }
 
-    .foodMeta {
+    .foodMeta,
+    .freezerMeta {
       color: #666;
       font-size: 14px;
       margin-bottom: 8px;
+      line-height: 1.4;
     }
 
     .lastEaten {
       color: #777;
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+
+    .freezerAvailable {
+      display: inline-block;
+      background: #eaf5f8;
+      color: #28667c;
+      padding: 6px 9px;
+      border-radius: 999px;
       font-size: 13px;
       margin-bottom: 10px;
     }
@@ -253,21 +285,69 @@
       font-size: 13px;
     }
 
-    .ingredients {
+    .ingredients,
+    .freezerNote {
       margin-top: 12px;
       color: #666;
       font-size: 13px;
       line-height: 1.45;
     }
 
-    #loadingFoods {
+    #loadingFoods,
+    #loadingFreezer {
       color: #666;
     }
 
-    #foodError {
+    #foodError,
+    #freezerError {
       background: #fff0f0;
       padding: 12px;
       border-radius: 10px;
+    }
+
+
+    /* FAGYASZTÓ */
+
+    .freezerCard.usedUp {
+      opacity: 0.5;
+    }
+
+    .freezerQuantity {
+      font-size: 17px;
+      font-weight: bold;
+      margin: 10px 0 5px;
+    }
+
+    .freezerCardButtons {
+      display: flex;
+      gap: 8px;
+      margin-top: 15px;
+    }
+
+    .freezerCardButtons button {
+      flex: 1;
+      border: 0;
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    .useFreezerButton {
+      background: #eaf5f8;
+      color: #28667c;
+      font-weight: bold;
+    }
+
+    .editFreezerButton {
+      background: #eee;
+      color: #222;
+    }
+
+    .freezerEmptyInfo {
+      background: white;
+      padding: 20px;
+      border-radius: 14px;
+      color: #777;
+      line-height: 1.5;
     }
 
 
@@ -378,6 +458,14 @@
       color: #888;
       font-size: 12px;
       margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    .pickerFreezerInfo {
+      color: #28667c;
+      font-size: 12px;
+      margin-top: 4px;
+      font-weight: 600;
     }
 
     .pickerFooter {
@@ -423,15 +511,18 @@
       color: #888;
       font-size: 12px;
       margin-top: 5px;
+      line-height: 1.4;
     }
 
     .formInput,
-    .formTextarea {
+    .formTextarea,
+    .formSelect {
       width: 100%;
       padding: 12px 13px;
       border: 1px solid #ddd;
       border-radius: 10px;
       outline: none;
+      background: white;
     }
 
     .formTextarea {
@@ -440,7 +531,8 @@
     }
 
     .formInput:focus,
-    .formTextarea:focus {
+    .formTextarea:focus,
+    .formSelect:focus {
       border-color: #777;
     }
 
@@ -505,6 +597,19 @@
       border-top: 1px solid #eee;
     }
 
+    .quantityRow {
+      display: flex;
+      gap: 10px;
+    }
+
+    .quantityRow .quantityInput {
+      width: 40%;
+    }
+
+    .quantityRow .unitInput {
+      flex: 1;
+    }
+
 
     /* ALSÓ NAV */
 
@@ -529,10 +634,10 @@
     .navButton {
       flex: 1;
       border: 0;
-      padding: 14px 8px;
+      padding: 11px 5px;
       background: white;
       color: #777;
-      font-size: 14px;
+      font-size: 13px;
     }
 
     .navButton.active {
@@ -542,7 +647,7 @@
 
     .navIcon {
       display: block;
-      font-size: 22px;
+      font-size: 21px;
       margin-bottom: 3px;
     }
 
@@ -597,9 +702,7 @@
 
         <h2>Menü</h2>
 
-        <p>
-          3 hetes családi terv
-        </p>
+        <p>3 hetes családi terv</p>
 
       </div>
 
@@ -651,6 +754,49 @@
     </div>
 
 
+    <!-- FAGYASZTÓ -->
+
+    <div id="freezerView" class="hidden">
+
+      <div class="sectionHeader">
+
+        <div class="sectionHeaderRow">
+
+          <div>
+            <h2>❄️ Fagyasztó</h2>
+            <p id="freezerCount"></p>
+          </div>
+
+          <button
+            id="addFreezerButton"
+            class="primaryButton">
+            ＋ Fagyasztóba
+          </button>
+
+        </div>
+
+      </div>
+
+      <input
+        id="freezerSearch"
+        class="searchInput"
+        type="search"
+        placeholder="Keresés a fagyasztóban...">
+
+      <p id="loadingFreezer">
+        Fagyasztó betöltése...
+      </p>
+
+      <p
+        id="freezerError"
+        class="hidden">
+      </p>
+
+      <div id="freezerList"></div>
+
+    </div>
+
+
     <button id="logoutButton">
       Kijelentkezés
     </button>
@@ -677,6 +823,15 @@
 
           <span class="navIcon">🍲</span>
           Ételek
+
+        </button>
+
+        <button
+          id="freezerNavButton"
+          class="navButton">
+
+          <span class="navIcon">❄️</span>
+          Fagyasztó
 
         </button>
 
@@ -719,7 +874,7 @@
       </div>
 
       <div class="pickerInfo">
-        Több fogást is kiválaszthatsz. Koppints az ételekre, majd nyomd meg a Kész gombot.
+        Több fogást is kiválaszthatsz. Ha valamiből van a fagyasztóban, azt ❄️ jelöli.
       </div>
 
       <input
@@ -751,7 +906,7 @@
   </div>
 
 
-  <!-- ÚJ / SZERKESZTÉS ÉTEL -->
+  <!-- ÉTEL ŰRLAP -->
 
   <div
     id="foodFormModal"
@@ -864,7 +1019,7 @@
         <textarea
           id="ingredientsInput"
           class="formTextarea"
-          placeholder="Pl. 1 kg darált hús, rizs, tejföl..."></textarea>
+          placeholder="Pl. darált hús, rizs, tejföl..."></textarea>
 
       </div>
 
@@ -895,10 +1050,6 @@
           </button>
 
         </div>
-
-        <span class="formHint">
-          Több címke is választható.
-        </span>
 
       </div>
 
@@ -931,8 +1082,166 @@
         class="editFooter hidden">
 
         <button
+          id="addThisFoodToFreezerButton"
+          class="secondaryButton fullButton">
+          ❄️ Tettem belőle a fagyasztóba
+        </button>
+
+        <br><br>
+
+        <button
           id="toggleActiveButton"
           class="dangerButton">
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- FAGYASZTÓ ŰRLAP -->
+
+  <div
+    id="freezerFormModal"
+    class="modal hidden">
+
+    <div class="modalContent">
+
+      <div class="modalHeader">
+
+        <div
+          id="freezerFormTitle"
+          class="modalTitle">
+          Fagyasztóba
+        </div>
+
+        <button
+          id="closeFreezerForm"
+          class="closeButton">
+          ✕
+        </button>
+
+      </div>
+
+
+      <div class="formGroup">
+
+        <label class="formLabel">
+          Kapcsolódó étel
+        </label>
+
+        <select
+          id="freezerFoodSelect"
+          class="formSelect">
+        </select>
+
+        <span class="formHint">
+          Ha például egy kész főételt fagyasztottál le, válaszd ki. Alapanyagnál vagy önálló tételnél maradhat „Nincs kapcsolódó étel”.
+        </span>
+
+      </div>
+
+
+      <div class="formGroup">
+
+        <label class="formLabel">
+          Megnevezés *
+        </label>
+
+        <input
+          id="freezerNameInput"
+          class="formInput"
+          type="text"
+          placeholder="Pl. Húsleves alaplé">
+
+      </div>
+
+
+      <div class="formGroup">
+
+        <label class="formLabel">
+          Mennyiség *
+        </label>
+
+        <div class="quantityRow">
+
+          <input
+            id="freezerQuantityInput"
+            class="formInput quantityInput"
+            type="number"
+            min="0"
+            step="1"
+            value="1">
+
+          <input
+            id="freezerUnitInput"
+            class="formInput unitInput"
+            type="text"
+            list="freezerUnits"
+            value="doboz"
+            placeholder="egység">
+
+          <datalist id="freezerUnits">
+            <option value="doboz">
+            <option value="adag">
+            <option value="zacskó">
+            <option value="db">
+            <option value="csomag">
+          </datalist>
+
+        </div>
+
+      </div>
+
+
+      <div class="formGroup">
+
+        <label class="formLabel">
+          Fagyasztás dátuma
+        </label>
+
+        <input
+          id="frozenAtInput"
+          class="formInput"
+          type="date">
+
+      </div>
+
+
+      <div class="formGroup">
+
+        <label class="formLabel">
+          Megjegyzés
+        </label>
+
+        <textarea
+          id="freezerNoteInput"
+          class="formTextarea"
+          placeholder="Pl. kb. 4 adag/doboz"></textarea>
+
+      </div>
+
+
+      <div
+        id="freezerFormMessage"
+        class="formMessage hidden">
+      </div>
+
+
+      <div class="formButtons">
+
+        <button
+          id="cancelFreezerButton"
+          class="secondaryButton">
+          Mégse
+        </button>
+
+        <button
+          id="saveFreezerButton"
+          class="primaryButton">
+          Mentés
         </button>
 
       </div>
@@ -1017,18 +1326,24 @@
     const menuView =
       document.getElementById("menuView");
 
+    const foodsView =
+      document.getElementById("foodsView");
+
+    const freezerView =
+      document.getElementById("freezerView");
+
     const menuWeeks =
       document.getElementById("menuWeeks");
 
     const menuNavButton =
       document.getElementById("menuNavButton");
 
-
-    const foodsView =
-      document.getElementById("foodsView");
-
     const foodsNavButton =
       document.getElementById("foodsNavButton");
+
+    const freezerNavButton =
+      document.getElementById("freezerNavButton");
+
 
     const foodCount =
       document.getElementById("foodCount");
@@ -1047,6 +1362,25 @@
 
     const addFoodButton =
       document.getElementById("addFoodButton");
+
+
+    const freezerCount =
+      document.getElementById("freezerCount");
+
+    const freezerSearch =
+      document.getElementById("freezerSearch");
+
+    const freezerList =
+      document.getElementById("freezerList");
+
+    const loadingFreezer =
+      document.getElementById("loadingFreezer");
+
+    const freezerError =
+      document.getElementById("freezerError");
+
+    const addFreezerButton =
+      document.getElementById("addFreezerButton");
 
 
     const foodPicker =
@@ -1128,30 +1462,66 @@
     const toggleActiveButton =
       document.getElementById("toggleActiveButton");
 
+    const addThisFoodToFreezerButton =
+      document.getElementById("addThisFoodToFreezerButton");
+
+
+    const freezerFormModal =
+      document.getElementById("freezerFormModal");
+
+    const freezerFormTitle =
+      document.getElementById("freezerFormTitle");
+
+    const closeFreezerForm =
+      document.getElementById("closeFreezerForm");
+
+    const freezerFoodSelect =
+      document.getElementById("freezerFoodSelect");
+
+    const freezerNameInput =
+      document.getElementById("freezerNameInput");
+
+    const freezerQuantityInput =
+      document.getElementById("freezerQuantityInput");
+
+    const freezerUnitInput =
+      document.getElementById("freezerUnitInput");
+
+    const frozenAtInput =
+      document.getElementById("frozenAtInput");
+
+    const freezerNoteInput =
+      document.getElementById("freezerNoteInput");
+
+    const freezerFormMessage =
+      document.getElementById("freezerFormMessage");
+
+    const cancelFreezerButton =
+      document.getElementById("cancelFreezerButton");
+
+    const saveFreezerButton =
+      document.getElementById("saveFreezerButton");
+
 
     /* ADATOK */
 
     let allFoods = [];
-
     let availableFoods = [];
-
     let savedMenu = {};
+    let freezerItems = [];
 
     let selectedDateKey = null;
-
     let selectedDayFoodsElement = null;
-
     let pickerSelectedFoods = [];
 
     let editingFoodId = null;
-
     let formOpenedFromPicker = false;
 
     let selectedTypes = [];
-
     let selectedApplicabilities = [];
-
     let selectedTags = [];
+
+    let editingFreezerId = null;
 
 
     const baseTags = [
@@ -1215,6 +1585,15 @@
         month +
         "-" +
         day
+      );
+
+    }
+
+
+    function getTodayKey() {
+
+      return getDateKey(
+        new Date()
       );
 
     }
@@ -1305,17 +1684,6 @@
 
     }
 
-
-    /*
-      Régi és új menüformátumot
-      egyaránt felismer.
-
-      Régi:
-      foodId + foodName
-
-      Új:
-      foods: [...]
-    */
 
     function getMenuFoods(menuItem) {
 
@@ -1532,7 +1900,102 @@
     }
 
 
-    /* MENÜ BETÖLTÉSE */
+    /*
+      Egy ételhez több külön
+      fagyasztó-bejegyzés is tartozhat.
+
+      Ezek mennyiségét összeadjuk.
+    */
+
+    function getFreezerForFood(foodId) {
+
+      return freezerItems.filter(
+        item =>
+          item.foodId === foodId &&
+          Number(item.quantity || 0) > 0
+      );
+
+    }
+
+
+    function getFreezerQuantityForFood(foodId) {
+
+      const items =
+        getFreezerForFood(foodId);
+
+
+      let total = 0;
+
+
+      for (const item of items) {
+
+        total +=
+          Number(
+            item.quantity || 0
+          );
+
+      }
+
+
+      return total;
+
+    }
+
+
+    function getFreezerSummaryForFood(foodId) {
+
+      const items =
+        getFreezerForFood(foodId);
+
+
+      if (items.length === 0) {
+        return "";
+      }
+
+
+      const grouped = {};
+
+
+      for (const item of items) {
+
+        const unit =
+          item.unit ||
+          "db";
+
+
+        if (!grouped[unit]) {
+          grouped[unit] = 0;
+        }
+
+
+        grouped[unit] +=
+          Number(
+            item.quantity || 0
+          );
+
+      }
+
+
+      const parts = [];
+
+
+      for (const unit in grouped) {
+
+        parts.push(
+          grouped[unit] +
+          " " +
+          unit
+        );
+
+      }
+
+
+      return parts.join(", ");
+
+    }
+
+
+    /* BETÖLTÉS */
 
     async function loadSavedMenu() {
 
@@ -1565,8 +2028,6 @@
 
     }
 
-
-    /* ÉTELEK BETÖLTÉSE */
 
     async function loadFoods() {
 
@@ -1674,7 +2135,118 @@
     }
 
 
-    /* ÉTELEK OLDAL */
+    async function loadFreezer() {
+
+      loadingFreezer.classList.remove(
+        "hidden"
+      );
+
+      freezerError.classList.add(
+        "hidden"
+      );
+
+
+      try {
+
+        const snapshot =
+          await getDocs(
+            collection(
+              db,
+              "freezer"
+            )
+          );
+
+
+        const items = [];
+
+
+        snapshot.forEach(
+          freezerDocument => {
+
+            items.push({
+              id:
+                freezerDocument.id,
+
+              ...freezerDocument.data()
+            });
+
+          }
+        );
+
+
+        items.sort(
+          (a, b) => {
+
+            const aEmpty =
+              Number(
+                a.quantity || 0
+              ) <= 0;
+
+            const bEmpty =
+              Number(
+                b.quantity || 0
+              ) <= 0;
+
+
+            if (aEmpty !== bEmpty) {
+
+              return aEmpty
+                ? 1
+                : -1;
+
+            }
+
+
+            return String(
+              a.name || ""
+            ).localeCompare(
+              String(
+                b.name || ""
+              ),
+              "hu"
+            );
+
+          }
+        );
+
+
+        freezerItems =
+          items;
+
+
+        loadingFreezer.classList.add(
+          "hidden"
+        );
+
+
+        renderFreezerList();
+
+
+      } catch (error) {
+
+        console.error(error);
+
+
+        loadingFreezer.classList.add(
+          "hidden"
+        );
+
+
+        freezerError.textContent =
+          "A fagyasztó betöltése nem sikerült: " +
+          error.message;
+
+
+        freezerError.classList.remove(
+          "hidden"
+        );
+
+      }
+
+    }
+
+
+    /* ÉTELEK */
 
     function foodMatchesSearch(
       food,
@@ -1855,6 +2427,34 @@
         card.appendChild(meta);
 
 
+        const freezerSummary =
+          getFreezerSummaryForFood(
+            food.id
+          );
+
+
+        if (freezerSummary) {
+
+          const freezerBadge =
+            document.createElement(
+              "div"
+            );
+
+          freezerBadge.className =
+            "freezerAvailable";
+
+          freezerBadge.textContent =
+            "❄️ Fagyasztóban: " +
+            freezerSummary;
+
+
+          card.appendChild(
+            freezerBadge
+          );
+
+        }
+
+
         const lastEaten =
           document.createElement("div");
 
@@ -1965,7 +2565,744 @@
     );
 
 
-    /* MENÜ KÁRTYA TARTALMA */
+    /* FAGYASZTÓ */
+
+    function renderFreezerList() {
+
+      freezerList.innerHTML = "";
+
+
+      const searchText =
+        normalizeText(
+          freezerSearch.value
+        ).trim();
+
+
+      const filtered =
+        freezerItems.filter(
+          item => {
+
+            const searchable =
+              normalizeText(
+                (item.name || "") +
+                " " +
+                (item.note || "") +
+                " " +
+                (item.unit || "")
+              );
+
+
+            return (
+              !searchText ||
+              searchable.includes(
+                searchText
+              )
+            );
+
+          }
+        );
+
+
+      const activeItems =
+        freezerItems.filter(
+          item =>
+            Number(
+              item.quantity || 0
+            ) > 0
+        );
+
+
+      freezerCount.textContent =
+        activeItems.length +
+        " aktív tétel";
+
+
+      if (filtered.length === 0) {
+
+        const empty =
+          document.createElement("div");
+
+        empty.className =
+          "freezerEmptyInfo";
+
+        empty.textContent =
+          "A fagyasztó még üres. A ＋ Fagyasztóba gombbal veheted fel az első tételt.";
+
+
+        freezerList.appendChild(
+          empty
+        );
+
+        return;
+
+      }
+
+
+      for (
+        const item
+        of filtered
+      ) {
+
+        const card =
+          document.createElement("div");
+
+        card.className =
+          "freezerCard";
+
+
+        const quantity =
+          Number(
+            item.quantity || 0
+          );
+
+
+        if (quantity <= 0) {
+
+          card.classList.add(
+            "usedUp"
+          );
+
+        }
+
+
+        const name =
+          document.createElement("div");
+
+        name.className =
+          "freezerName";
+
+        name.textContent =
+          item.name ||
+          "Névtelen tétel";
+
+
+        card.appendChild(
+          name
+        );
+
+
+        const quantityElement =
+          document.createElement("div");
+
+        quantityElement.className =
+          "freezerQuantity";
+
+
+        if (quantity > 0) {
+
+          quantityElement.textContent =
+            "📦 " +
+            quantity +
+            " " +
+            (item.unit || "db");
+
+        } else {
+
+          quantityElement.textContent =
+            "Elfogyott";
+
+        }
+
+
+        card.appendChild(
+          quantityElement
+        );
+
+
+        const meta =
+          document.createElement("div");
+
+        meta.className =
+          "freezerMeta";
+
+
+        const metaParts = [];
+
+
+        if (item.frozenAt) {
+
+          metaParts.push(
+            "❄️ " +
+            formatDateKey(
+              item.frozenAt
+            )
+          );
+
+        }
+
+
+        if (item.foodId) {
+
+          metaParts.push(
+            "ételhez kapcsolva"
+          );
+
+        }
+
+
+        meta.textContent =
+          metaParts.join(" • ");
+
+
+        card.appendChild(
+          meta
+        );
+
+
+        if (item.note) {
+
+          const note =
+            document.createElement("div");
+
+          note.className =
+            "freezerNote";
+
+          note.textContent =
+            item.note;
+
+
+          card.appendChild(
+            note
+          );
+
+        }
+
+
+        const buttons =
+          document.createElement("div");
+
+        buttons.className =
+          "freezerCardButtons";
+
+
+        if (quantity > 0) {
+
+          const useButton =
+            document.createElement(
+              "button"
+            );
+
+          useButton.className =
+            "useFreezerButton";
+
+          useButton.textContent =
+            "❄️ Felhasználtam 1-et";
+
+
+          useButton.addEventListener(
+            "click",
+            async () => {
+
+              await useOneFreezerItem(
+                item
+              );
+
+            }
+          );
+
+
+          buttons.appendChild(
+            useButton
+          );
+
+        }
+
+
+        const editButton =
+          document.createElement(
+            "button"
+          );
+
+        editButton.className =
+          "editFreezerButton";
+
+        editButton.textContent =
+          "Szerkesztés";
+
+
+        editButton.addEventListener(
+          "click",
+          () => {
+
+            openFreezerForm(
+              item
+            );
+
+          }
+        );
+
+
+        buttons.appendChild(
+          editButton
+        );
+
+
+        card.appendChild(
+          buttons
+        );
+
+
+        freezerList.appendChild(
+          card
+        );
+
+      }
+
+    }
+
+
+    freezerSearch.addEventListener(
+      "input",
+      renderFreezerList
+    );
+
+
+    async function useOneFreezerItem(
+      item
+    ) {
+
+      const oldQuantity =
+        Number(
+          item.quantity || 0
+        );
+
+
+      if (oldQuantity <= 0) {
+        return;
+      }
+
+
+      const newQuantity =
+        oldQuantity - 1;
+
+
+      await updateDoc(
+        doc(
+          db,
+          "freezer",
+          item.id
+        ),
+        {
+          quantity:
+            newQuantity,
+
+          updatedAt:
+            serverTimestamp(),
+
+          updatedBy:
+            auth.currentUser
+              ? auth.currentUser.uid
+              : ""
+        }
+      );
+
+
+      await loadFreezer();
+
+
+      renderFoodList();
+
+      createMenu();
+
+    }
+
+
+    /* FAGYASZTÓ ŰRLAP */
+
+    function populateFreezerFoodSelect(
+      selectedFoodId
+    ) {
+
+      freezerFoodSelect.innerHTML = "";
+
+
+      const none =
+        document.createElement(
+          "option"
+        );
+
+      none.value = "";
+
+      none.textContent =
+        "Nincs kapcsolódó étel";
+
+
+      freezerFoodSelect.appendChild(
+        none
+      );
+
+
+      for (
+        const food
+        of availableFoods
+      ) {
+
+        const option =
+          document.createElement(
+            "option"
+          );
+
+        option.value =
+          food.id;
+
+        option.textContent =
+          food.name;
+
+
+        if (
+          food.id ===
+          selectedFoodId
+        ) {
+
+          option.selected =
+            true;
+
+        }
+
+
+        freezerFoodSelect.appendChild(
+          option
+        );
+
+      }
+
+    }
+
+
+    function openFreezerForm(
+      item,
+      preselectedFoodId
+    ) {
+
+      editingFreezerId =
+        item
+          ? item.id
+          : null;
+
+
+      freezerFormMessage.classList.add(
+        "hidden"
+      );
+
+
+      if (item) {
+
+        freezerFormTitle.textContent =
+          "Fagyasztó tétel szerkesztése";
+
+
+        populateFreezerFoodSelect(
+          item.foodId || ""
+        );
+
+
+        freezerNameInput.value =
+          item.name || "";
+
+        freezerQuantityInput.value =
+          Number(
+            item.quantity || 0
+          );
+
+        freezerUnitInput.value =
+          item.unit || "doboz";
+
+        frozenAtInput.value =
+          item.frozenAt ||
+          getTodayKey();
+
+        freezerNoteInput.value =
+          item.note || "";
+
+
+      } else {
+
+        freezerFormTitle.textContent =
+          "Fagyasztóba";
+
+
+        populateFreezerFoodSelect(
+          preselectedFoodId || ""
+        );
+
+
+        const food =
+          preselectedFoodId
+            ? getFoodById(
+                preselectedFoodId
+              )
+            : null;
+
+
+        freezerNameInput.value =
+          food
+            ? food.name
+            : "";
+
+        freezerQuantityInput.value =
+          1;
+
+        freezerUnitInput.value =
+          "doboz";
+
+        frozenAtInput.value =
+          getTodayKey();
+
+        freezerNoteInput.value =
+          "";
+
+      }
+
+
+      freezerFormModal.classList.remove(
+        "hidden"
+      );
+
+    }
+
+
+    freezerFoodSelect.addEventListener(
+      "change",
+      () => {
+
+        const food =
+          getFoodById(
+            freezerFoodSelect.value
+          );
+
+
+        if (food) {
+
+          freezerNameInput.value =
+            food.name;
+
+        }
+
+      }
+    );
+
+
+    addFreezerButton.addEventListener(
+      "click",
+      () => {
+
+        openFreezerForm(
+          null,
+          ""
+        );
+
+      }
+    );
+
+
+    closeFreezerForm.addEventListener(
+      "click",
+      () => {
+
+        freezerFormModal.classList.add(
+          "hidden"
+        );
+
+      }
+    );
+
+
+    cancelFreezerButton.addEventListener(
+      "click",
+      () => {
+
+        freezerFormModal.classList.add(
+          "hidden"
+        );
+
+      }
+    );
+
+
+    saveFreezerButton.addEventListener(
+      "click",
+      async () => {
+
+        const user =
+          auth.currentUser;
+
+
+        if (!user) {
+          return;
+        }
+
+
+        const name =
+          freezerNameInput.value.trim();
+
+
+        const quantity =
+          Number(
+            freezerQuantityInput.value
+          );
+
+
+        const unit =
+          freezerUnitInput.value.trim();
+
+
+        if (!name) {
+
+          freezerFormMessage.textContent =
+            "Add meg a fagyasztott tétel nevét.";
+
+          freezerFormMessage.classList.remove(
+            "hidden"
+          );
+
+          return;
+
+        }
+
+
+        if (
+          Number.isNaN(quantity) ||
+          quantity < 0
+        ) {
+
+          freezerFormMessage.textContent =
+            "A mennyiség nem lehet negatív.";
+
+          freezerFormMessage.classList.remove(
+            "hidden"
+          );
+
+          return;
+
+        }
+
+
+        if (!unit) {
+
+          freezerFormMessage.textContent =
+            "Add meg a mennyiség egységét is.";
+
+          freezerFormMessage.classList.remove(
+            "hidden"
+          );
+
+          return;
+
+        }
+
+
+        saveFreezerButton.disabled =
+          true;
+
+        saveFreezerButton.textContent =
+          "Mentés...";
+
+
+        try {
+
+          const data = {
+            foodId:
+              freezerFoodSelect.value || "",
+
+            name:
+              name,
+
+            quantity:
+              quantity,
+
+            unit:
+              unit,
+
+            frozenAt:
+              frozenAtInput.value ||
+              getTodayKey(),
+
+            note:
+              freezerNoteInput.value.trim(),
+
+            updatedAt:
+              serverTimestamp(),
+
+            updatedBy:
+              user.uid
+          };
+
+
+          if (editingFreezerId) {
+
+            await updateDoc(
+              doc(
+                db,
+                "freezer",
+                editingFreezerId
+              ),
+              data
+            );
+
+
+          } else {
+
+            data.createdAt =
+              serverTimestamp();
+
+            data.createdBy =
+              user.uid;
+
+
+            await addDoc(
+              collection(
+                db,
+                "freezer"
+              ),
+              data
+            );
+
+          }
+
+
+          await loadFreezer();
+
+
+          freezerFormModal.classList.add(
+            "hidden"
+          );
+
+
+          renderFoodList();
+
+          createMenu();
+
+
+        } catch (error) {
+
+          console.error(error);
+
+
+          freezerFormMessage.textContent =
+            "A mentés nem sikerült: " +
+            error.message;
+
+
+          freezerFormMessage.classList.remove(
+            "hidden"
+          );
+
+
+        } finally {
+
+          saveFreezerButton.disabled =
+            false;
+
+          saveFreezerButton.textContent =
+            "Mentés";
+
+        }
+
+      }
+    );
+
+
+    /* MENÜ KÁRTYÁK */
 
     function renderDayFoods(
       container,
@@ -2050,6 +3387,34 @@
         }
 
 
+        const freezerSummary =
+          getFreezerSummaryForFood(
+            menuFood.foodId
+          );
+
+
+        if (freezerSummary) {
+
+          const freezer =
+            document.createElement(
+              "span"
+            );
+
+          freezer.className =
+            "dayFreezer";
+
+          freezer.textContent =
+            "❄️ Fagyasztóban: " +
+            freezerSummary;
+
+
+          line.appendChild(
+            freezer
+          );
+
+        }
+
+
         container.appendChild(
           line
         );
@@ -2058,8 +3423,6 @@
 
     }
 
-
-    /* MENÜ */
 
     function createMenu() {
 
@@ -2104,7 +3467,9 @@
       ) {
 
         const weekStart =
-          new Date(currentMonday);
+          new Date(
+            currentMonday
+          );
 
 
         weekStart.setDate(
@@ -2114,7 +3479,9 @@
 
 
         const weekEnd =
-          new Date(weekStart);
+          new Date(
+            weekStart
+          );
 
 
         weekEnd.setDate(
@@ -2123,14 +3490,18 @@
 
 
         const weekElement =
-          document.createElement("div");
+          document.createElement(
+            "div"
+          );
 
         weekElement.className =
           "menuWeek";
 
 
         const title =
-          document.createElement("div");
+          document.createElement(
+            "div"
+          );
 
         title.className =
           "weekTitle";
@@ -2194,7 +3565,9 @@
         ) {
 
           const date =
-            new Date(weekStart);
+            new Date(
+              weekStart
+            );
 
 
           date.setDate(
@@ -2204,25 +3577,33 @@
 
 
           const dateKey =
-            getDateKey(date);
+            getDateKey(
+              date
+            );
 
 
           const dayCard =
-            document.createElement("div");
+            document.createElement(
+              "div"
+            );
 
           dayCard.className =
             "dayCard";
 
 
           const dayInfo =
-            document.createElement("div");
+            document.createElement(
+              "div"
+            );
 
           dayInfo.className =
             "dayInfo";
 
 
           const dayName =
-            document.createElement("div");
+            document.createElement(
+              "div"
+            );
 
           dayName.className =
             "dayName";
@@ -2232,7 +3613,9 @@
 
 
           const dayDate =
-            document.createElement("div");
+            document.createElement(
+              "div"
+            );
 
           dayDate.className =
             "dayDate";
@@ -2257,7 +3640,9 @@
 
 
           const dayFoods =
-            document.createElement("div");
+            document.createElement(
+              "div"
+            );
 
           dayFoods.className =
             "dayFoods";
@@ -2323,7 +3708,7 @@
     }
 
 
-    /* TÖBBFOGÁSOS ÉTELVÁLASZTÓ */
+    /* MENÜVÁLASZTÓ */
 
     function openFoodPicker(
       dayFoodsElement,
@@ -2442,7 +3827,9 @@
       if (filtered.length === 0) {
 
         const empty =
-          document.createElement("div");
+          document.createElement(
+            "div"
+          );
 
         empty.className =
           "emptyMessage";
@@ -2463,7 +3850,9 @@
       for (const food of filtered) {
 
         const item =
-          document.createElement("div");
+          document.createElement(
+            "div"
+          );
 
         item.className =
           "foodPickerItem";
@@ -2485,7 +3874,9 @@
 
 
         const check =
-          document.createElement("div");
+          document.createElement(
+            "div"
+          );
 
         check.className =
           "pickerCheck";
@@ -2497,14 +3888,18 @@
 
 
         const info =
-          document.createElement("div");
+          document.createElement(
+            "div"
+          );
 
         info.className =
           "pickerFoodInfo";
 
 
         const name =
-          document.createElement("div");
+          document.createElement(
+            "div"
+          );
 
         name.className =
           "foodPickerItemName";
@@ -2519,7 +3914,9 @@
 
 
         const meta =
-          document.createElement("div");
+          document.createElement(
+            "div"
+          );
 
         meta.className =
           "foodPickerItemMeta";
@@ -2572,7 +3969,9 @@
 
           metaParts.push(
             "utoljára " +
-            formatDateKey(lastDate)
+            formatDateKey(
+              lastDate
+            )
           );
 
         }
@@ -2588,6 +3987,34 @@
 
           info.appendChild(
             meta
+          );
+
+        }
+
+
+        const freezerSummary =
+          getFreezerSummaryForFood(
+            food.id
+          );
+
+
+        if (freezerSummary) {
+
+          const freezer =
+            document.createElement(
+              "div"
+            );
+
+          freezer.className =
+            "pickerFreezerInfo";
+
+          freezer.textContent =
+            "❄️ Fagyasztóban: " +
+            freezerSummary;
+
+
+          info.appendChild(
+            freezer
           );
 
         }
@@ -2640,14 +4067,6 @@
       }
     );
 
-
-    /*
-      A Kész gomb az egész napi
-      választást egyszerre menti.
-
-      Ha nincs kiválasztott étel,
-      a napi dokumentum törlődik.
-    */
 
     saveMenuButton.addEventListener(
       "click",
@@ -2766,6 +4185,7 @@
 
           console.error(error);
 
+
           alert(
             "A menü mentése nem sikerült: " +
             error.message
@@ -2786,7 +4206,7 @@
     );
 
 
-    /* ÚJ ÉTEL / SZERKESZTÉS */
+    /* ÉTEL ŰRLAP */
 
     function renderChoiceButtons(
       container,
@@ -2918,9 +4338,7 @@
 
 
       newTypeInput.value = "";
-
       newApplicabilityInput.value = "";
-
       newTagInput.value = "";
 
 
@@ -2982,17 +4400,13 @@
 
 
         foodNameInput.value = "";
-
         ingredientsInput.value = "";
-
 
         selectedTypes =
           ["Főétel"];
 
-
         selectedApplicabilities =
           [];
-
 
         selectedTags =
           [];
@@ -3010,16 +4424,6 @@
 
       foodFormModal.classList.remove(
         "hidden"
-      );
-
-
-      setTimeout(
-        () => {
-
-          foodNameInput.focus();
-
-        },
-        100
       );
 
     }
@@ -3151,6 +4555,29 @@
     );
 
 
+    addThisFoodToFreezerButton.addEventListener(
+      "click",
+      () => {
+
+        if (!editingFoodId) {
+          return;
+        }
+
+
+        foodFormModal.classList.add(
+          "hidden"
+        );
+
+
+        openFreezerForm(
+          null,
+          editingFoodId
+        );
+
+      }
+    );
+
+
     saveFoodButton.addEventListener(
       "click",
       async () => {
@@ -3227,6 +4654,10 @@
           let savedFoodId = null;
 
 
+          const wasNewFood =
+            !editingFoodId;
+
+
           if (editingFoodId) {
 
             const oldFood =
@@ -3286,26 +4717,11 @@
           }
 
 
-          const wasNewFood =
-            !editingFoodId;
-
-
           await loadFoods();
 
 
           closeFoodFormModal();
 
-
-          /*
-            Ha a napi menüből
-            vettünk fel új ételt,
-            az új ételt hozzáadjuk a
-            jelenlegi kiválasztáshoz.
-
-            Nem írja felül a már
-            kiválasztott levest /
-            főételt / desszertet.
-          */
 
           if (
             formOpenedFromPicker &&
@@ -3321,23 +4737,20 @@
               );
 
 
-            if (newFood) {
+            if (
+              newFood &&
+              !isPickerFoodSelected(
+                newFood.id
+              )
+            ) {
 
-              if (
-                !isPickerFoodSelected(
-                  newFood.id
-                )
-              ) {
+              pickerSelectedFoods.push({
+                foodId:
+                  newFood.id,
 
-                pickerSelectedFoods.push({
-                  foodId:
-                    newFood.id,
-
-                  foodName:
-                    newFood.name || ""
-                });
-
-              }
+                foodName:
+                  newFood.name || ""
+              });
 
             }
 
@@ -3450,12 +4863,20 @@
         "hidden"
       );
 
+      freezerView.classList.add(
+        "hidden"
+      );
+
 
       menuNavButton.classList.add(
         "active"
       );
 
       foodsNavButton.classList.remove(
+        "active"
+      );
+
+      freezerNavButton.classList.remove(
         "active"
       );
 
@@ -3472,6 +4893,10 @@
         "hidden"
       );
 
+      freezerView.classList.add(
+        "hidden"
+      );
+
 
       menuNavButton.classList.remove(
         "active"
@@ -3481,8 +4906,45 @@
         "active"
       );
 
+      freezerNavButton.classList.remove(
+        "active"
+      );
+
 
       renderFoodList();
+
+    }
+
+
+    function showFreezer() {
+
+      menuView.classList.add(
+        "hidden"
+      );
+
+      foodsView.classList.add(
+        "hidden"
+      );
+
+      freezerView.classList.remove(
+        "hidden"
+      );
+
+
+      menuNavButton.classList.remove(
+        "active"
+      );
+
+      foodsNavButton.classList.remove(
+        "active"
+      );
+
+      freezerNavButton.classList.add(
+        "active"
+      );
+
+
+      renderFreezerList();
 
     }
 
@@ -3496,6 +4958,12 @@
     foodsNavButton.addEventListener(
       "click",
       showFoods
+    );
+
+
+    freezerNavButton.addEventListener(
+      "click",
+      showFreezer
     );
 
 
@@ -3531,7 +4999,9 @@
       "click",
       async () => {
 
-        await signOut(auth);
+        await signOut(
+          auth
+        );
 
       }
     );
@@ -3564,9 +5034,12 @@
 
             await loadFoods();
 
+            await loadFreezer();
+
             createMenu();
 
             showMenu();
+
 
           } catch (error) {
 
