@@ -224,6 +224,14 @@
       border-bottom: 0;
     }
 
+    .foodPickerRemove {
+  padding: 15px 4px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #ddd;
+  color: #777;
+  cursor: pointer;
+}
+
 
     /* ALSÓ NAVIGÁCIÓ */
 
@@ -413,8 +421,9 @@
     getDocs,
     doc,
     setDoc,
+    deleteDoc,
     serverTimestamp
-  }
+}
     from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
 
@@ -588,91 +597,110 @@
   /* ÉTELVÁLASZTÓ */
 
   function openFoodPicker(
-    dayFoodElement,
-    dateKey
-  ) {
+  dayFoodElement,
+  dateKey
+) {
 
-    selectedDayFoodElement =
-      dayFoodElement;
+  selectedDayFoodElement =
+    dayFoodElement;
 
-    selectedDateKey =
-      dateKey;
-
-
-    foodPickerList.innerHTML = "";
+  selectedDateKey =
+    dateKey;
 
 
-    for (const food of availableFoods) {
-
-      const item =
-        document.createElement("div");
-
-      item.className =
-        "foodPickerItem";
-
-      item.textContent =
-        food.name;
+  foodPickerList.innerHTML = "";
 
 
-      item.addEventListener(
-        "click",
-        async () => {
+  /*
+    Ha erre a napra már van terv,
+    megjelenítjük a törlési lehetőséget.
+  */
 
-          const user =
-            auth.currentUser;
+  if (savedMenu[selectedDateKey]) {
 
+    const removeItem =
+      document.createElement("div");
 
-          if (!user) {
-            return;
-          }
+    removeItem.className =
+      "foodPickerRemove";
 
-
-          /*
-            A dokumentum ID-ja maga
-            a dátum.
-
-            Emiatt ugyanazon nap
-            újraválasztásakor NEM
-            keletkezik új dokumentum.
-          */
-
-          await setDoc(
-            doc(
-              db,
-              "menu",
-              selectedDateKey
-            ),
-            {
-              date:
-                selectedDateKey,
-
-              foodId:
-                food.id,
-
-              foodName:
-                food.name || "",
-
-              updatedAt:
-                serverTimestamp(),
-
-              updatedBy:
-                user.uid
-            },
-            {
-              merge: true
-            }
-          );
+    removeItem.textContent =
+      "🗑️ Terv törlése";
 
 
-          /*
-            A helyi példányt is
-            frissítjük, ezért nem kell
-            újratölteni az oldalt.
-          */
+    removeItem.addEventListener(
+      "click",
+      async () => {
 
-          savedMenu[
+        await deleteDoc(
+          doc(
+            db,
+            "menu",
             selectedDateKey
-          ] = {
+          )
+        );
+
+
+        delete savedMenu[
+          selectedDateKey
+        ];
+
+
+        selectedDayFoodElement.textContent =
+          "Nincs tervezve";
+
+
+        foodPicker.classList.add(
+          "hidden"
+        );
+
+      }
+    );
+
+
+    foodPickerList.appendChild(
+      removeItem
+    );
+
+  }
+
+
+  /*
+    Ételek listája
+  */
+
+  for (const food of availableFoods) {
+
+    const item =
+      document.createElement("div");
+
+    item.className =
+      "foodPickerItem";
+
+    item.textContent =
+      food.name;
+
+
+    item.addEventListener(
+      "click",
+      async () => {
+
+        const user =
+          auth.currentUser;
+
+
+        if (!user) {
+          return;
+        }
+
+
+        await setDoc(
+          doc(
+            db,
+            "menu",
+            selectedDateKey
+          ),
+          {
             date:
               selectedDateKey,
 
@@ -680,34 +708,58 @@
               food.id,
 
             foodName:
-              food.name || ""
-          };
+              food.name || "",
+
+            updatedAt:
+              serverTimestamp(),
+
+            updatedBy:
+              user.uid
+          },
+          {
+            merge: true
+          }
+        );
 
 
-          selectedDayFoodElement.textContent =
-            food.name;
+        savedMenu[
+          selectedDateKey
+        ] = {
+          date:
+            selectedDateKey,
+
+          foodId:
+            food.id,
+
+          foodName:
+            food.name || ""
+        };
 
 
-          foodPicker.classList.add(
-            "hidden"
-          );
-
-        }
-      );
+        selectedDayFoodElement.textContent =
+          food.name;
 
 
-      foodPickerList.appendChild(
-        item
-      );
+        foodPicker.classList.add(
+          "hidden"
+        );
 
-    }
+      }
+    );
 
 
-    foodPicker.classList.remove(
-      "hidden"
+    foodPickerList.appendChild(
+      item
     );
 
   }
+
+
+  foodPicker.classList.remove(
+    "hidden"
+  );
+
+}
 
 
   closeFoodPicker.addEventListener(
