@@ -29,14 +29,9 @@
       margin: 0 0 4px;
     }
 
-    h3 {
-      margin-top: 0;
-    }
-
     button,
     input,
-    textarea,
-    select {
+    textarea {
       font: inherit;
     }
 
@@ -113,6 +108,7 @@
       color: #8a3030;
     }
 
+
     /* MENÜ */
 
     .menuWeek {
@@ -132,7 +128,7 @@
       border-radius: 14px;
       box-shadow: 0 1px 6px rgba(0,0,0,0.05);
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
       gap: 16px;
       cursor: pointer;
@@ -152,20 +148,38 @@
       color: #888;
     }
 
-    .dayFood {
-      color: #777;
+    .dayFoods {
+      flex: 1;
       text-align: right;
-      line-height: 1.35;
     }
 
-    .dayFood.planned {
+    .dayFoodEmpty {
+      color: #888;
+    }
+
+    .dayFoodLine {
       color: #222;
       font-weight: 600;
+      line-height: 1.35;
+      margin-bottom: 5px;
+    }
+
+    .dayFoodLine:last-child {
+      margin-bottom: 0;
+    }
+
+    .dayFoodType {
+      display: block;
+      color: #999;
+      font-size: 11px;
+      font-weight: normal;
+      margin-top: 1px;
     }
 
     .dayCard.today {
       border: 2px solid #222;
     }
+
 
     /* KERESÉS */
 
@@ -182,6 +196,7 @@
     .searchInput:focus {
       border-color: #777;
     }
+
 
     /* ÉTELEK */
 
@@ -255,6 +270,7 @@
       border-radius: 10px;
     }
 
+
     /* MODAL */
 
     .modal {
@@ -298,7 +314,18 @@
       font-size: 17px;
     }
 
+
     /* ÉTELVÁLASZTÓ */
+
+    .pickerInfo {
+      padding: 11px 13px;
+      margin-bottom: 12px;
+      background: #f4f4f4;
+      border-radius: 10px;
+      color: #666;
+      font-size: 13px;
+      line-height: 1.4;
+    }
 
     .pickerAction {
       padding: 15px 4px;
@@ -307,14 +334,40 @@
       cursor: pointer;
     }
 
-    .pickerAction.remove {
-      color: #8a3030;
-    }
-
     .foodPickerItem {
-      padding: 14px 4px;
+      padding: 14px 8px;
       border-bottom: 1px solid #eee;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .foodPickerItem.selected {
+      background: #f2f2f2;
+      border-radius: 10px;
+    }
+
+    .pickerCheck {
+      width: 28px;
+      height: 28px;
+      min-width: 28px;
+      border: 2px solid #ccc;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+    .foodPickerItem.selected .pickerCheck {
+      background: #222;
+      border-color: #222;
+      color: white;
+    }
+
+    .pickerFoodInfo {
+      flex: 1;
     }
 
     .foodPickerItemName {
@@ -327,10 +380,31 @@
       margin-top: 4px;
     }
 
+    .pickerFooter {
+      position: sticky;
+      bottom: -20px;
+      background: white;
+      padding: 14px 0 20px;
+      margin-top: 12px;
+      border-top: 1px solid #eee;
+    }
+
+    .pickerSaveButton {
+      width: 100%;
+      border: 0;
+      border-radius: 12px;
+      padding: 14px;
+      background: #222;
+      color: white;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
     .emptyMessage {
       padding: 18px 4px;
       color: #777;
     }
+
 
     /* ŰRLAP */
 
@@ -430,6 +504,7 @@
       padding-top: 18px;
       border-top: 1px solid #eee;
     }
+
 
     /* ALSÓ NAV */
 
@@ -623,6 +698,7 @@
       <div class="modalHeader">
 
         <div>
+
           <div class="modalTitle">
             Mit együnk?
           </div>
@@ -631,6 +707,7 @@
             id="pickerDate"
             class="foodPickerItemMeta">
           </div>
+
         </div>
 
         <button
@@ -639,6 +716,10 @@
           ✕
         </button>
 
+      </div>
+
+      <div class="pickerInfo">
+        Több fogást is kiválaszthatsz. Koppints az ételekre, majd nyomd meg a Kész gombot.
       </div>
 
       <input
@@ -653,13 +734,17 @@
         ＋ Új étel hozzáadása
       </div>
 
-      <div
-        id="removePlan"
-        class="pickerAction remove hidden">
-        🗑️ Terv törlése erről a napról
-      </div>
-
       <div id="foodPickerList"></div>
+
+      <div class="pickerFooter">
+
+        <button
+          id="saveMenuButton"
+          class="pickerSaveButton">
+          Kész
+        </button>
+
+      </div>
 
     </div>
 
@@ -982,8 +1067,8 @@
     const addFoodFromPicker =
       document.getElementById("addFoodFromPicker");
 
-    const removePlan =
-      document.getElementById("removePlan");
+    const saveMenuButton =
+      document.getElementById("saveMenuButton");
 
 
     const foodFormModal =
@@ -1054,12 +1139,13 @@
 
     let selectedDateKey = null;
 
-    let selectedDayFoodElement = null;
+    let selectedDayFoodsElement = null;
+
+    let pickerSelectedFoods = [];
 
     let editingFoodId = null;
 
     let formOpenedFromPicker = false;
-
 
     let selectedTypes = [];
 
@@ -1067,15 +1153,6 @@
 
     let selectedTags = [];
 
-
-    /*
-      Az Excel "Címkék" munkalapjának
-      jelenlegi alapértékei.
-
-      A Firestore-ban lévő ételekből
-      további címkéket is automatikusan
-      összegyűjtünk.
-    */
 
     const baseTags = [
       "🐔 csirke",
@@ -1203,6 +1280,7 @@
       const parts =
         dateKey.split("-");
 
+
       if (parts.length !== 3) {
         return dateKey;
       }
@@ -1228,6 +1306,86 @@
     }
 
 
+    /*
+      Régi és új menüformátumot
+      egyaránt felismer.
+
+      Régi:
+      foodId + foodName
+
+      Új:
+      foods: [...]
+    */
+
+    function getMenuFoods(menuItem) {
+
+      if (!menuItem) {
+        return [];
+      }
+
+
+      if (
+        Array.isArray(
+          menuItem.foods
+        )
+      ) {
+
+        return menuItem.foods;
+
+      }
+
+
+      if (
+        menuItem.foodId ||
+        menuItem.foodName
+      ) {
+
+        return [
+          {
+            foodId:
+              menuItem.foodId || "",
+
+            foodName:
+              menuItem.foodName || ""
+          }
+        ];
+
+      }
+
+
+      return [];
+
+    }
+
+
+    function getFoodById(foodId) {
+
+      return allFoods.find(
+        food =>
+          food.id === foodId
+      );
+
+    }
+
+
+    function getFoodTypes(foodId) {
+
+      const food =
+        getFoodById(foodId);
+
+
+      if (!food) {
+        return [];
+      }
+
+
+      return parseMultiValue(
+        food.types
+      );
+
+    }
+
+
     function getLastEatenDate(foodId) {
 
       let latest = null;
@@ -1238,13 +1396,20 @@
         in savedMenu
       ) {
 
-        const item =
-          savedMenu[dateKey];
+        const menuFoods =
+          getMenuFoods(
+            savedMenu[dateKey]
+          );
 
 
-        if (
-          item.foodId === foodId
-        ) {
+        const found =
+          menuFoods.some(
+            item =>
+              item.foodId === foodId
+          );
+
+
+        if (found) {
 
           if (
             latest === null ||
@@ -1590,6 +1755,7 @@
         empty.textContent =
           "Nincs találat.";
 
+
         foodList.appendChild(
           empty
         );
@@ -1776,7 +1942,8 @@
           () => {
 
             openFoodForm(
-              food
+              food,
+              false
             );
 
           }
@@ -1796,6 +1963,100 @@
       "input",
       renderFoodList
     );
+
+
+    /* MENÜ KÁRTYA TARTALMA */
+
+    function renderDayFoods(
+      container,
+      dateKey
+    ) {
+
+      container.innerHTML = "";
+
+
+      const menuFoods =
+        getMenuFoods(
+          savedMenu[dateKey]
+        );
+
+
+      if (
+        menuFoods.length === 0
+      ) {
+
+        const empty =
+          document.createElement("div");
+
+        empty.className =
+          "dayFoodEmpty";
+
+        empty.textContent =
+          "Nincs tervezve";
+
+
+        container.appendChild(
+          empty
+        );
+
+        return;
+
+      }
+
+
+      for (
+        const menuFood
+        of menuFoods
+      ) {
+
+        const line =
+          document.createElement("div");
+
+        line.className =
+          "dayFoodLine";
+
+
+        line.textContent =
+          menuFood.foodName ||
+          "Étel";
+
+
+        const types =
+          getFoodTypes(
+            menuFood.foodId
+          );
+
+
+        if (
+          types.length > 0
+        ) {
+
+          const type =
+            document.createElement(
+              "span"
+            );
+
+          type.className =
+            "dayFoodType";
+
+          type.textContent =
+            types.join(", ");
+
+
+          line.appendChild(
+            type
+          );
+
+        }
+
+
+        container.appendChild(
+          line
+        );
+
+      }
+
+    }
 
 
     /* MENÜ */
@@ -1995,33 +2256,17 @@
           );
 
 
-          const dayFood =
+          const dayFoods =
             document.createElement("div");
 
-          dayFood.className =
-            "dayFood";
+          dayFoods.className =
+            "dayFoods";
 
 
-          if (
-            savedMenu[dateKey] &&
-            savedMenu[dateKey].foodName
-          ) {
-
-            dayFood.textContent =
-              savedMenu[
-                dateKey
-              ].foodName;
-
-            dayFood.classList.add(
-              "planned"
-            );
-
-          } else {
-
-            dayFood.textContent =
-              "Nincs tervezve";
-
-          }
+          renderDayFoods(
+            dayFoods,
+            dateKey
+          );
 
 
           if (
@@ -2045,7 +2290,7 @@
           );
 
           dayCard.appendChild(
-            dayFood
+            dayFoods
           );
 
 
@@ -2054,7 +2299,7 @@
             () => {
 
               openFoodPicker(
-                dayFood,
+                dayFoods,
                 dateKey
               );
 
@@ -2078,15 +2323,15 @@
     }
 
 
-    /* ÉTELVÁLASZTÓ */
+    /* TÖBBFOGÁSOS ÉTELVÁLASZTÓ */
 
     function openFoodPicker(
-      dayFoodElement,
+      dayFoodsElement,
       dateKey
     ) {
 
-      selectedDayFoodElement =
-        dayFoodElement;
+      selectedDayFoodsElement =
+        dayFoodsElement;
 
       selectedDateKey =
         dateKey;
@@ -2101,23 +2346,18 @@
       pickerSearch.value = "";
 
 
-      if (
-        savedMenu[
-          selectedDateKey
-        ]
-      ) {
+      pickerSelectedFoods =
+        getMenuFoods(
+          savedMenu[dateKey]
+        ).map(
+          item => ({
+            foodId:
+              item.foodId,
 
-        removePlan.classList.remove(
-          "hidden"
+            foodName:
+              item.foodName
+          })
         );
-
-      } else {
-
-        removePlan.classList.add(
-          "hidden"
-        );
-
-      }
 
 
       renderFoodPickerList();
@@ -2126,6 +2366,54 @@
       foodPicker.classList.remove(
         "hidden"
       );
+
+    }
+
+
+    function isPickerFoodSelected(
+      foodId
+    ) {
+
+      return pickerSelectedFoods.some(
+        item =>
+          item.foodId === foodId
+      );
+
+    }
+
+
+    function togglePickerFood(
+      food
+    ) {
+
+      const index =
+        pickerSelectedFoods.findIndex(
+          item =>
+            item.foodId === food.id
+        );
+
+
+      if (index >= 0) {
+
+        pickerSelectedFoods.splice(
+          index,
+          1
+        );
+
+      } else {
+
+        pickerSelectedFoods.push({
+          foodId:
+            food.id,
+
+          foodName:
+            food.name || ""
+        });
+
+      }
+
+
+      renderFoodPickerList();
 
     }
 
@@ -2181,6 +2469,40 @@
           "foodPickerItem";
 
 
+        const selected =
+          isPickerFoodSelected(
+            food.id
+          );
+
+
+        if (selected) {
+
+          item.classList.add(
+            "selected"
+          );
+
+        }
+
+
+        const check =
+          document.createElement("div");
+
+        check.className =
+          "pickerCheck";
+
+        check.textContent =
+          selected
+            ? "✓"
+            : "";
+
+
+        const info =
+          document.createElement("div");
+
+        info.className =
+          "pickerFoodInfo";
+
+
         const name =
           document.createElement("div");
 
@@ -2191,7 +2513,7 @@
           food.name;
 
 
-        item.appendChild(
+        info.appendChild(
           name
         );
 
@@ -2204,6 +2526,23 @@
 
 
         const metaParts = [];
+
+
+        const types =
+          parseMultiValue(
+            food.types
+          );
+
+
+        if (
+          types.length > 0
+        ) {
+
+          metaParts.push(
+            types.join(", ")
+          );
+
+        }
 
 
         const applicability =
@@ -2243,20 +2582,31 @@
           metaParts.join(" • ");
 
 
-        if (meta.textContent) {
+        if (
+          meta.textContent
+        ) {
 
-          item.appendChild(
+          info.appendChild(
             meta
           );
 
         }
 
 
+        item.appendChild(
+          check
+        );
+
+        item.appendChild(
+          info
+        );
+
+
         item.addEventListener(
           "click",
-          async () => {
+          () => {
 
-            await saveMenuSelection(
+            togglePickerFood(
               food
             );
 
@@ -2269,90 +2619,6 @@
         );
 
       }
-
-    }
-
-
-    async function saveMenuSelection(
-      food
-    ) {
-
-      const user =
-        auth.currentUser;
-
-
-      if (
-        !user ||
-        !selectedDateKey
-      ) {
-
-        return;
-
-      }
-
-
-      await setDoc(
-        doc(
-          db,
-          "menu",
-          selectedDateKey
-        ),
-        {
-          date:
-            selectedDateKey,
-
-          foodId:
-            food.id,
-
-          foodName:
-            food.name || "",
-
-          updatedAt:
-            serverTimestamp(),
-
-          updatedBy:
-            user.uid
-        },
-        {
-          merge: true
-        }
-      );
-
-
-      savedMenu[
-        selectedDateKey
-      ] = {
-        date:
-          selectedDateKey,
-
-        foodId:
-          food.id,
-
-        foodName:
-          food.name || ""
-      };
-
-
-      if (
-        selectedDayFoodElement
-      ) {
-
-        selectedDayFoodElement.textContent =
-          food.name;
-
-        selectedDayFoodElement.classList.add(
-          "planned"
-        );
-
-      }
-
-
-      foodPicker.classList.add(
-        "hidden"
-      );
-
-
-      renderFoodList();
 
     }
 
@@ -2375,49 +2641,146 @@
     );
 
 
-    removePlan.addEventListener(
+    /*
+      A Kész gomb az egész napi
+      választást egyszerre menti.
+
+      Ha nincs kiválasztott étel,
+      a napi dokumentum törlődik.
+    */
+
+    saveMenuButton.addEventListener(
       "click",
       async () => {
 
-        if (!selectedDateKey) {
-          return;
-        }
-
-
-        await deleteDoc(
-          doc(
-            db,
-            "menu",
-            selectedDateKey
-          )
-        );
-
-
-        delete savedMenu[
-          selectedDateKey
-        ];
+        const user =
+          auth.currentUser;
 
 
         if (
-          selectedDayFoodElement
+          !user ||
+          !selectedDateKey
         ) {
 
-          selectedDayFoodElement.textContent =
-            "Nincs tervezve";
-
-          selectedDayFoodElement.classList.remove(
-            "planned"
-          );
+          return;
 
         }
 
 
-        foodPicker.classList.add(
-          "hidden"
-        );
+        saveMenuButton.disabled =
+          true;
+
+        saveMenuButton.textContent =
+          "Mentés...";
 
 
-        renderFoodList();
+        try {
+
+          if (
+            pickerSelectedFoods.length === 0
+          ) {
+
+            await deleteDoc(
+              doc(
+                db,
+                "menu",
+                selectedDateKey
+              )
+            );
+
+
+            delete savedMenu[
+              selectedDateKey
+            ];
+
+          } else {
+
+            const foodsToSave =
+              pickerSelectedFoods.map(
+                item => ({
+                  foodId:
+                    item.foodId,
+
+                  foodName:
+                    item.foodName
+                })
+              );
+
+
+            await setDoc(
+              doc(
+                db,
+                "menu",
+                selectedDateKey
+              ),
+              {
+                date:
+                  selectedDateKey,
+
+                foods:
+                  foodsToSave,
+
+                updatedAt:
+                  serverTimestamp(),
+
+                updatedBy:
+                  user.uid
+              }
+            );
+
+
+            savedMenu[
+              selectedDateKey
+            ] = {
+              date:
+                selectedDateKey,
+
+              foods:
+                foodsToSave
+            };
+
+          }
+
+
+          if (
+            selectedDayFoodsElement
+          ) {
+
+            renderDayFoods(
+              selectedDayFoodsElement,
+              selectedDateKey
+            );
+
+          }
+
+
+          foodPicker.classList.add(
+            "hidden"
+          );
+
+
+          renderFoodList();
+
+
+        } catch (error) {
+
+          console.error(error);
+
+          alert(
+            "A menü mentése nem sikerült: " +
+            error.message
+          );
+
+
+        } finally {
+
+          saveMenuButton.disabled =
+            false;
+
+          saveMenuButton.textContent =
+            "Kész";
+
+        }
 
       }
     );
@@ -2598,7 +2961,9 @@
         );
 
 
-        if (food.active === false) {
+        if (
+          food.active === false
+        ) {
 
           toggleActiveButton.textContent =
             "✓ Étel újraaktiválása";
@@ -2859,7 +3224,7 @@
           };
 
 
-          let savedFood = null;
+          let savedFoodId = null;
 
 
           if (editingFoodId) {
@@ -2893,12 +3258,8 @@
             );
 
 
-            savedFood = {
-              id:
-                editingFoodId,
-
-              ...foodData
-            };
+            savedFoodId =
+              editingFoodId;
 
           } else {
 
@@ -2919,14 +3280,14 @@
               );
 
 
-            savedFood = {
-              id:
-                newDocument.id,
-
-              ...foodData
-            };
+            savedFoodId =
+              newDocument.id;
 
           }
+
+
+          const wasNewFood =
+            !editingFoodId;
 
 
           await loadFoods();
@@ -2936,33 +3297,58 @@
 
 
           /*
-            Ha a menüből indítottuk az
-            új étel felvételét, az új
-            ételt rögtön beállítjuk az
-            adott napra.
+            Ha a napi menüből
+            vettünk fel új ételt,
+            az új ételt hozzáadjuk a
+            jelenlegi kiválasztáshoz.
+
+            Nem írja felül a már
+            kiválasztott levest /
+            főételt / desszertet.
           */
 
           if (
             formOpenedFromPicker &&
-            !editingFoodId &&
+            wasNewFood &&
             selectedDateKey
           ) {
 
-            const currentFood =
+            const newFood =
               allFoods.find(
                 item =>
                   item.id ===
-                  savedFood.id
+                  savedFoodId
               );
 
 
-            if (currentFood) {
+            if (newFood) {
 
-              await saveMenuSelection(
-                currentFood
-              );
+              if (
+                !isPickerFoodSelected(
+                  newFood.id
+                )
+              ) {
+
+                pickerSelectedFoods.push({
+                  foodId:
+                    newFood.id,
+
+                  foodName:
+                    newFood.name || ""
+                });
+
+              }
 
             }
+
+
+            pickerSearch.value = "";
+
+            renderFoodPickerList();
+
+            foodPicker.classList.remove(
+              "hidden"
+            );
 
           }
 
@@ -3047,9 +3433,6 @@
 
 
         closeFoodFormModal();
-
-
-        renderFoodPickerList();
 
       }
     );
