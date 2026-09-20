@@ -247,6 +247,20 @@
   border-bottom: 0;
 }
 
+    .dayDate {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #888;
+}
+
+.dayCard.today {
+  border: 2px solid #222;
+}
+
+.dayCard.today .dayName {
+  font-weight: 700;
+}
+    
   </style>
 </head>
 
@@ -508,64 +522,172 @@ closeFoodPicker.addEventListener("click", () => {
 
     function createMenu() {
 
-      menuWeeks.innerHTML = "";
+  menuWeeks.innerHTML = "";
 
-      for (let week = 1; week <= 3; week++) {
+  const today = new Date();
 
-        const weekElement =
-          document.createElement("div");
+  today.setHours(0, 0, 0, 0);
 
-        weekElement.className = "menuWeek";
+  // Az aktuális hét hétfője
+  const currentMonday = new Date(today);
 
+  const dayOfWeek = today.getDay();
 
-        const title =
-          document.createElement("div");
+  const daysSinceMonday =
+    dayOfWeek === 0 ? 6 : dayOfWeek - 1;
 
-        title.className = "weekTitle";
-        title.textContent = `${week}. hét`;
-
-        weekElement.appendChild(title);
-
-
-        for (const day of dayNames) {
-
-          const dayCard =
-            document.createElement("div");
-
-          dayCard.className = "dayCard";
+  currentMonday.setDate(
+    today.getDate() - daysSinceMonday
+  );
 
 
-          const dayName =
-            document.createElement("div");
+  for (let week = 0; week < 3; week++) {
 
-          dayName.className = "dayName";
-          dayName.textContent = day;
+    const weekStart = new Date(currentMonday);
 
-
-          const dayFood =
-            document.createElement("div");
-
-          dayFood.className = "dayFood";
-          dayFood.textContent = "Nincs tervezve";
+    weekStart.setDate(
+      currentMonday.getDate() + (week * 7)
+    );
 
 
-          dayCard.appendChild(dayName);
-          dayCard.appendChild(dayFood);
-          
-          dayCard.addEventListener("click", () => {
-            openFoodPicker(dayFood);
-          });
+    const weekEnd = new Date(weekStart);
 
-          weekElement.appendChild(dayCard);
+    weekEnd.setDate(
+      weekStart.getDate() + 6
+    );
 
+
+    const weekElement =
+      document.createElement("div");
+
+    weekElement.className = "menuWeek";
+
+
+    const title =
+      document.createElement("div");
+
+    title.className = "weekTitle";
+
+
+    const startText =
+      weekStart.toLocaleDateString(
+        "hu-HU",
+        {
+          month: "short",
+          day: "numeric"
         }
+      );
+
+    const endText =
+      weekEnd.toLocaleDateString(
+        "hu-HU",
+        {
+          month: "short",
+          day: "numeric"
+        }
+      );
 
 
-        menuWeeks.appendChild(weekElement);
+    if (week === 0) {
+      title.textContent =
+        Ezen a héten · ${startText} – ${endText};
+    } else if (week === 1) {
+      title.textContent =
+        Jövő héten · ${startText} – ${endText};
+    } else {
+      title.textContent =
+        ${startText} – ${endText};
+    }
+
+
+    weekElement.appendChild(title);
+
+
+    for (let day = 0; day < 7; day++) {
+
+      const date = new Date(weekStart);
+
+      date.setDate(
+        weekStart.getDate() + day
+      );
+
+
+      const dayCard =
+        document.createElement("div");
+
+      dayCard.className = "dayCard";
+
+
+      const dayInfo =
+        document.createElement("div");
+
+
+      const dayName =
+        document.createElement("div");
+
+      dayName.className = "dayName";
+
+      dayName.textContent =
+        dayNames[day];
+
+
+      const dayDate =
+        document.createElement("div");
+
+      dayDate.className = "dayDate";
+
+      dayDate.textContent =
+        date.toLocaleDateString(
+          "hu-HU",
+          {
+            month: "short",
+            day: "numeric"
+          }
+        );
+
+
+      dayInfo.appendChild(dayName);
+      dayInfo.appendChild(dayDate);
+
+
+      const dayFood =
+        document.createElement("div");
+
+      dayFood.className = "dayFood";
+      dayFood.textContent = "Nincs tervezve";
+
+
+      // MAI NAP KIEMELÉSE
+
+      if (date.getTime() === today.getTime()) {
+
+        dayCard.classList.add("today");
+
+        dayName.textContent =
+          ${dayNames[day]} · MA;
 
       }
 
+
+      dayCard.appendChild(dayInfo);
+      dayCard.appendChild(dayFood);
+
+
+      dayCard.addEventListener("click", () => {
+        openFoodPicker(dayFood);
+      });
+
+
+      weekElement.appendChild(dayCard);
+
     }
+
+
+    menuWeeks.appendChild(weekElement);
+
+  }
+
+}
 
 
     /* NAVIGÁCIÓ */
