@@ -790,6 +790,12 @@ button { cursor: pointer; }
 
   <div id="schoolContent" class="hidden">
 
+    <div class="weekNavigation">
+      <button id="previousSchoolWeekButton">‹ Előző hét</button>
+      <button id="todaySchoolWeekButton" class="todayButton">MA</button>
+      <button id="nextSchoolWeekButton">Következő hét ›</button>
+    </div>
+
     <div class="childSelector">
       <button id="benceButton" class="childButton active">Bence</button>
       <button id="atiButton" class="childButton">Ati</button>
@@ -1204,6 +1210,11 @@ let calendarWeekOffset = 0;
 let schoolMenus = [];
 let selectedChild = "Bence";
 let selectedSchoolDate = null;
+let schoolWeekOffset = 0;
+
+const previousSchoolWeekButton = byId("previousSchoolWeekButton");
+const todaySchoolWeekButton = byId("todaySchoolWeekButton");
+const nextSchoolWeekButton = byId("nextSchoolWeekButton");
 
 const baseTags = [
   "🐔 csirke","🐽 sertés","🐮 marha","🐟 hal","húsmentes",
@@ -1699,13 +1710,45 @@ function findSchoolMenuForDate(dateKey) {
   return schoolMenus.find(menu => dateKey >= menu.startDate && dateKey <= menu.endDate);
 }
 
-function getCurrentSchoolMenu() {
-  const today = getTodayKey();
-  const current = findSchoolMenuForDate(today);
-  if (current) return current;
-  if (schoolMenus.length > 0) return schoolMenus[schoolMenus.length - 1];
-  return null;
+function getSelectedSchoolWeek() {
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  const monday = getMonday(today);
+  const selectedMonday = addDays(monday, schoolWeekOffset * 7);
+  const selectedMondayKey = getDateKey(selectedMonday);
+
+  return {
+    monday:selectedMonday,
+    mondayKey:selectedMondayKey
+  };
 }
+
+function getCurrentSchoolMenu() {
+  const selectedWeek = getSelectedSchoolWeek();
+
+  return schoolMenus.find(menu =>
+    menu.startDate === selectedWeek.mondayKey
+  ) || null;
+}
+
+  previousSchoolWeekButton.addEventListener("click", () => {
+  schoolWeekOffset--;
+  selectedSchoolDate = null;
+  renderSchool();
+});
+
+nextSchoolWeekButton.addEventListener("click", () => {
+  schoolWeekOffset++;
+  selectedSchoolDate = null;
+  renderSchool();
+});
+
+todaySchoolWeekButton.addEventListener("click", () => {
+  schoolWeekOffset = 0;
+  selectedSchoolDate = null;
+  renderSchool();
+});
 
 function getSchoolDayName(dateKey) {
   const parts = dateKey.split("-");
@@ -1722,10 +1765,22 @@ function renderSchool() {
   const menu = getCurrentSchoolMenu();
 
   if (!menu) {
-    schoolContent.classList.add("hidden");
-    schoolEmpty.classList.remove("hidden");
-    return;
-  }
+  schoolContent.classList.remove("hidden");
+  schoolEmpty.classList.remove("hidden");
+
+  schoolWeekInfo.innerHTML = "";
+  schoolDayTabs.innerHTML = "";
+  schoolDayContent.innerHTML = "";
+
+  const selectedWeek = getSelectedSchoolWeek();
+
+  schoolWeekInfo.innerHTML =
+    "<div class=\"schoolWeekTitle\">" +
+    formatDateKey(selectedWeek.mondayKey) +
+    " hetére nincs eltárolt iskolai étlap.</div>";
+
+  return;
+}
 
   schoolEmpty.classList.add("hidden");
   schoolContent.classList.remove("hidden");
