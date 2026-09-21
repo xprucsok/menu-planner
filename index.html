@@ -781,10 +781,10 @@ button { cursor: pointer; }
   </div>
 
   <div id="schoolImportBox" class="schoolImportBox hidden">
-    <strong>A 39. heti étlap még nincs betöltve.</strong>
-    A 2026.09.21–09.25. közötti iskolai étlapot egy kattintással elmentheted a Firestore-ba.
+    <strong id="schoolImportTitle">Új iskolai étlap található.</strong>
+    <span id="schoolImportText"></span>
     <button id="importSchoolMenuButton" class="schoolImportButton">
-      39. heti étlap importálása
+      Étkezési terv betöltése
     </button>
   </div>
 
@@ -1056,6 +1056,12 @@ import {
 }
 from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
 
+import * as pdfjsLib
+from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
+
 import {
   getFirestore,
   collection,
@@ -1166,6 +1172,8 @@ const cancelFreezerButton = byId("cancelFreezerButton");
 const saveFreezerButton = byId("saveFreezerButton");
 
 const schoolImportBox = byId("schoolImportBox");
+const schoolImportTitle = byId("schoolImportTitle");
+const schoolImportText = byId("schoolImportText");
 const importSchoolMenuButton = byId("importSchoolMenuButton");
 const schoolContent = byId("schoolContent");
 const schoolEmpty = byId("schoolEmpty");
@@ -1368,271 +1376,342 @@ function getFreezerSummaryForFood(foodId) {
 
 /* ISKOLAI MENÜ */
 
-function nutrition(energy, protein, fat, saturated, carbs, sugar, salt) {
-  return {
-    energy: energy,
-    protein: protein,
-    fat: fat,
-    saturatedFat: saturated,
-    carbohydrate: carbs,
-    sugar: sugar,
-    salt: salt
-  };
+function getIsoWeekData(date) {
+  const d = new Date(date);
+  d.setHours(0,0,0,0);
+  const monday = getMonday(d);
+  const thursday = addDays(monday,3);
+  const firstThursday = new Date(thursday.getFullYear(),0,4);
+  const firstMonday = getMonday(firstThursday);
+  const weekNumber = 1 + Math.round((monday - firstMonday) / 604800000);
+  return { weekNumber: weekNumber, monday: monday };
 }
 
-function createSchoolMenu39() {
-
-  return {
-    weekNumber: 39,
-    startDate: "2026-09-21",
-    endDate: "2026-09-25",
-    schoolType: "Általános iskola",
-    source: "Bakos és Társai Bt.",
-    days: {
-
-      "2026-09-21": {
-        breakfast: {
-          foods: [
-            "Tej, 1,5%-os *7",
-            "Sertés finommájas *6,7",
-            "Teljeskiőrlésű kenyér *1",
-            "Paradicsom"
-          ],
-          nutrition: nutrition("340 kcal","17 g","10 g","6 g","41 g","0 g","1,7 g")
-        },
-        lunch: {
-          foods: [
-            "Gulyásleves *1,3,9",
-            "(sertéscomb, leveszöldség, levestészta)",
-            "Tejbendara *1,7",
-            "Kakaós cukorszórat",
-            "Teljeskiőrlésű kenyér *1"
-          ],
-          nutrition: nutrition("720 kcal","33 g","16 g","6 g","111 g","40 g","1,5 g")
-        },
-        snack: {
-          foods: [
-            "Sajtkrémes párna *1,3,6,7"
-          ],
-          nutrition: nutrition("260 kcal","7 g","8 g","4 g","27 g","0 g","0,7 g")
-        }
-      },
-
-      "2026-09-22": {
-        breakfast: {
-          foods: [
-            "Karamellás tej 1,5%-os *7",
-            "Briós *1,3,7"
-          ],
-          nutrition: nutrition("361 kcal","14 g","8 g","4 g","57 g","17 g","0,8 g")
-        },
-        lunch: {
-          foods: [
-            "Mediterrán zöldségleves *1,3",
-            "Főtt virsli",
-            "Zöldborsófőzelék *1,7",
-            "Gyümölcs"
-          ],
-          nutrition: nutrition("711 kcal","33 g","28 g","6 g","80 g","0 g","2,5 g")
-        },
-        snack: {
-          foods: [
-            "Fokhagymás felvágott *6",
-            "Margarin",
-            "Teljeskiőrlésű kenyér *1",
-            "Kígyóuborka"
-          ],
-          nutrition: nutrition("239 kcal","8 g","10 g","3 g","29 g","0 g","1 g")
-        }
-      },
-
-      "2026-09-23": {
-        breakfast: {
-          foods: [
-            "Gyümölcstea",
-            "Főtt tojás karika *3",
-            "Margarin",
-            "Teljeskiőrlésű zsemle *1",
-            "Kígyóuborka"
-          ],
-          nutrition: nutrition("325 kcal","12 g","4 g","12 g","59 g","16 g","0,7 g")
-        },
-        lunch: {
-          foods: [
-            "Szárazbab leves tésztával *1,3,9",
-            "Natúr csirkemell *1",
-            "Tört burgonya margarinnal *7",
-            "Kapros joghurtos saláta *7",
-            "(joghurt, fejeskáposzta, jégsaláta, sárgarépa, kígyóuborka, lilahagyma)"
-          ],
-          nutrition: nutrition("769 kcal","44 g","27 g","7 g","87 g","0 g","2,3 g")
-        },
-        snack: {
-          foods: [
-            "Méz",
-            "Margarin",
-            "Fehér kenyér *1"
-          ],
-          nutrition: nutrition("221 kcal","13 g","6 g","1,5 g","30 g","0 g","1 g")
-        }
-      },
-
-      "2026-09-24": {
-        breakfast: {
-          foods: [
-            "Gyümölcstea",
-            "Tonhalkrém *1,4,7",
-            "Teljeskiőrlésű kenyér *1",
-            "Lilahagyma"
-          ],
-          nutrition: nutrition("326 kcal","6 g","16 g","5 g","40 g","9 g","1 g")
-        },
-        lunch: {
-          foods: [
-            "Kertészleves tésztával *1,3,7",
-            "Pulykamell apró vadasan *1,7,10",
-            "Durum spagetti *1"
-          ],
-          nutrition: nutrition("711 kcal","37 g","27 g","6 g","80 g","0 g","3,3 g")
-        },
-        snack: {
-          foods: [
-            "Házias kőrözött *7",
-            "Félegyházi zsemle *1",
-            "Kápia paprika"
-          ],
-          nutrition: nutrition("265 kcal","7 g","7 g","0,1 g","44 g","9,6 g","1,2 g")
-        }
-      },
-
-      "2026-09-25": {
-        breakfast: {
-          foods: [
-            "Tej, 1,5%-os *7",
-            "Szerencse szelet",
-            "Margarin",
-            "Félbarna kenyér *1",
-            "Zöldpaprika"
-          ],
-          nutrition: nutrition("333 kcal","16 g","12 g","4 g","40 g","0 g","2,6 g")
-        },
-        lunch: {
-          foods: [
-            "Erdei gyümölcsleves *1,7",
-            "Bácskai rizseshús *1",
-            "Friss uborkasaláta"
-          ],
-          nutrition: nutrition("804 kcal","24 g","35 g","10 g","95 g","21 g","3 g")
-        },
-        snack: {
-          foods: [
-            "Teljeskiőrlésű málnás zabos kocka *1,3,7"
-          ],
-          nutrition: nutrition("164 kcal","7 g","4 g","2 g","25 g","11 g","0,2 g")
-        }
-      }
-    }
-  };
+function cleanSchoolText(text) {
+  return String(text || "")
+    .replace(/\s*\*\s*\d+(?:\s*,\s*\d+)*/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
-async function loadSchoolMenus() {
+function normalizePdfWord(text) {
+  return normalizeText(text).replace(/\s+/g," ").trim();
+}
 
-  const snapshot = await getDocs(collection(db,"schoolMenus"));
-
-  schoolMenus = [];
-
-  snapshot.forEach(item => {
-    schoolMenus.push({
-      id: item.id,
-      ...item.data()
-    });
+function groupPdfLines(items) {
+  const sorted = items.slice().sort((a,b) => {
+    if (Math.abs(a.y - b.y) > 2.5) return b.y - a.y;
+    return a.x - b.x;
   });
 
-  schoolMenus.sort((a,b) =>
-    String(a.startDate || "").localeCompare(String(b.startDate || ""))
-  );
+  const lines = [];
+  sorted.forEach(item => {
+    let line = lines.find(entry => Math.abs(entry.y - item.y) <= 2.5);
+    if (!line) {
+      line = { y:item.y, items:[] };
+      lines.push(line);
+    }
+    line.items.push(item);
+  });
 
-  renderSchool();
+  lines.forEach(line => line.items.sort((a,b) => a.x - b.x));
+  lines.sort((a,b) => b.y - a.y);
+  return lines;
 }
 
-async function importSchoolMenu39() {
+function lineText(line) {
+  return cleanSchoolText(line.items.map(item => item.str).join(" "));
+}
 
-  const user = auth.currentUser;
-  if (!user) return;
+function parseNutritionFromItems(items) {
+  const result = {};
+  const labels = [
+    { key:"energy", tests:["energia"] },
+    { key:"protein", tests:["fehérje"] },
+    { key:"fat", tests:["zsír"] },
+    { key:"saturatedFat", tests:["telített"] },
+    { key:"carbohydrate", tests:["szénhidrát"] },
+    { key:"sugar", tests:["cukor"] },
+    { key:"salt", tests:["só"] }
+  ];
 
-  importSchoolMenuButton.disabled = true;
-  importSchoolMenuButton.textContent = "Importálás...";
+  labels.forEach(label => {
+    const labelItem = items.find(item => {
+      const value = normalizePdfWord(item.str);
+      return label.tests.some(test => value.includes(test));
+    });
 
+    if (!labelItem) return;
+
+    const candidates = items.filter(item => {
+      if (item === labelItem) return false;
+      if (item.y >= labelItem.y + 1) return false;
+      if (labelItem.y - item.y > 18) return false;
+      if (Math.abs(item.x - labelItem.x) > 38) return false;
+      return /\d/.test(item.str);
+    }).sort((a,b) => {
+      const da = Math.abs(a.x - labelItem.x) + (labelItem.y - a.y) * 2;
+      const db = Math.abs(b.x - labelItem.x) + (labelItem.y - b.y) * 2;
+      return da - db;
+    });
+
+    if (candidates.length) {
+      let value = cleanSchoolText(candidates[0].str);
+      if (value && !/[a-zA-Z]/.test(value)) {
+        value += label.key === "energy" ? " kcal" : " g";
+      }
+      result[label.key] = value;
+    }
+  });
+
+  return Object.keys(result).length ? result : null;
+}
+
+function parseMealCell(cellItems) {
+  const lines = groupPdfLines(cellItems);
+  let nutritionY = null;
+
+  lines.forEach(line => {
+    const text = normalizePdfWord(line.items.map(item => item.str).join(" "));
+    if (nutritionY === null && (text.includes("energia") || text.includes("fehérje"))) {
+      nutritionY = line.y;
+    }
+  });
+
+  const foodLines = lines.filter(line => nutritionY === null || line.y > nutritionY + 1);
+  const foods = [];
+
+  foodLines.forEach(line => {
+    let text = lineText(line);
+    if (!text) return;
+
+    const normalized = normalizePdfWord(text);
+    if (["tízórai","ebéd","a menü","uzsonna"].includes(normalized)) return;
+    if (normalized.includes("energia") || normalized.includes("fehérje") ||
+        normalized.includes("szénhidrát") || normalized.includes("cukor") ||
+        normalized === "zsír" || normalized.includes("telített") || normalized === "só") return;
+
+    if (/^\d+(?:[,.]\d+)?\s*(?:kcal|g)?$/i.test(text)) return;
+
+    if (normalized.startsWith("összetevők")) {
+      if (foods.length) foods[foods.length - 1] += " (" + text + ")";
+      else foods.push(text);
+      return;
+    }
+
+    if (foods.length && /^[a-záéíóöőúüű]/.test(text) && text.length < 80) {
+      const previous = foods[foods.length - 1];
+      if (previous.endsWith(",") || previous.endsWith("-") || previous.length > 45) {
+        foods[foods.length - 1] = previous + " " + text;
+        return;
+      }
+    }
+
+    foods.push(text);
+  });
+
+  return {
+    foods: foods,
+    nutrition: parseNutritionFromItems(cellItems)
+  };
+}
+
+async function parseSchoolPdf(url, expectedWeekNumber) {
+  const loadingTask = pdfjsLib.getDocument(url);
+  const pdf = await loadingTask.promise;
+  const page = await pdf.getPage(1);
+  const content = await page.getTextContent();
+
+  const items = content.items
+    .filter(item => String(item.str || "").trim())
+    .map(item => ({
+      str:String(item.str || "").trim(),
+      x:item.transform[4],
+      y:item.transform[5]
+    }));
+
+  const dayLabels = ["Hétfő","Kedd","Szerda","Csütörtök","Péntek"];
+  const dayHeads = dayLabels.map(label => {
+    const found = items.find(item => normalizePdfWord(item.str) === normalizePdfWord(label));
+    if (!found) throw new Error("Nem találom a PDF-ben ezt az oszlopot: " + label);
+    return found;
+  });
+
+  const mealLabel = word => items.find(item => normalizePdfWord(item.str).includes(word));
+  const breakfastLabel = mealLabel("tízórai");
+  const lunchLabel = mealLabel("ebéd");
+  const snackLabel = mealLabel("uzsonna");
+
+  if (!breakfastLabel || !lunchLabel || !snackLabel) {
+    throw new Error("A PDF étkezési sorai nem ismerhetők fel.");
+  }
+
+  const allText = items.map(item => item.str).join(" ");
+  const dateMatch = allText.match(/(20\d{2})[.\/-](\d{2})[.\/-](\d{2})\s*[-–]\s*(?:(20\d{2})[.\/-])?(\d{2})[.\/-](\d{2})/);
+
+  let startDate;
+  let endDate;
+
+  if (dateMatch) {
+    startDate = dateMatch[1] + "-" + dateMatch[2] + "-" + dateMatch[3];
+    endDate = (dateMatch[4] || dateMatch[1]) + "-" + dateMatch[5] + "-" + dateMatch[6];
+  } else {
+    const now = new Date();
+    const iso = getIsoWeekData(now);
+    const diff = Number(expectedWeekNumber) - iso.weekNumber;
+    const monday = addDays(iso.monday,diff * 7);
+    startDate = getDateKey(monday);
+    endDate = getDateKey(addDays(monday,4));
+  }
+
+  const dayCenters = dayHeads.map(item => item.x);
+  const boundaries = [];
+  for (let i = 0; i < dayCenters.length - 1; i++) {
+    boundaries.push((dayCenters[i] + dayCenters[i + 1]) / 2);
+  }
+
+  function dayIndexForX(x) {
+    for (let i = 0; i < boundaries.length; i++) {
+      if (x < boundaries[i]) return i;
+    }
+    return 4;
+  }
+
+  function itemsForCell(dayIndex, topY, bottomY) {
+    return items.filter(item => {
+      if (dayIndexForX(item.x) !== dayIndex) return false;
+      return item.y < topY - 1 && item.y > bottomY + 1;
+    });
+  }
+
+  const startParts = startDate.split("-");
+  const monday = new Date(Number(startParts[0]),Number(startParts[1]) - 1,Number(startParts[2]));
+  const days = {};
+
+  for (let i = 0; i < 5; i++) {
+    const dateKey = getDateKey(addDays(monday,i));
+    days[dateKey] = {
+      breakfast: parseMealCell(itemsForCell(i,breakfastLabel.y,lunchLabel.y)),
+      lunch: parseMealCell(itemsForCell(i,lunchLabel.y,snackLabel.y)),
+      snack: parseMealCell(itemsForCell(i,snackLabel.y,35))
+    };
+  }
+
+  return {
+    weekNumber:Number(expectedWeekNumber),
+    startDate:startDate,
+    endDate:endDate,
+    schoolType:"Általános iskola",
+    source:"Bakos és Társai Bt.",
+    pdfUrl:url,
+    days:days
+  };
+}
+
+async function pdfExists(url) {
   try {
-
-    const data = createSchoolMenu39();
-
-    data.importedAt = serverTimestamp();
-    data.importedBy = user.uid;
-
-    await setDoc(
-      doc(db,"schoolMenus","2026-09-21"),
-      data
-    );
-
-    await loadSchoolMenus();
-
+    const response = await fetch(url,{ method:"HEAD", cache:"no-store" });
+    return response.ok;
   } catch(error) {
-
-    console.error(error);
-    alert("Az iskolai étlap importálása nem sikerült: " + error.message);
-
-  } finally {
-
-    importSchoolMenuButton.disabled = false;
-    importSchoolMenuButton.textContent = "39. heti étlap importálása";
+    return false;
   }
 }
 
-function findSchoolMenuForDate(dateKey) {
-
-  return schoolMenus.find(menu =>
-    dateKey >= menu.startDate &&
-    dateKey <= menu.endDate
-  );
+function getSchoolPdfUrl(weekNumber) {
+  return "school-pdfs/ka" + weekNumber + ".pdf";
 }
 
-function getCurrentSchoolMenu() {
+async function findImportableSchoolMenu() {
+  const iso = getIsoWeekData(new Date());
+  const candidates = [iso.weekNumber, iso.weekNumber + 1];
 
-  const today = getTodayKey();
+  for (const weekNumber of candidates) {
+    const alreadySaved = schoolMenus.some(menu => Number(menu.weekNumber) === weekNumber);
+    if (alreadySaved) continue;
 
-  const current = findSchoolMenuForDate(today);
-  if (current) return current;
-
-  if (schoolMenus.length > 0) {
-    return schoolMenus[schoolMenus.length - 1];
+    const url = getSchoolPdfUrl(weekNumber);
+    if (await pdfExists(url)) {
+      return { weekNumber:weekNumber, url:url };
+    }
   }
 
   return null;
 }
 
+async function refreshSchoolImportBox() {
+  schoolImportBox.classList.add("hidden");
+  const candidate = await findImportableSchoolMenu();
+  schoolImportBox.dataset.week = "";
+  schoolImportBox.dataset.url = "";
+
+  if (!candidate) return;
+
+  schoolImportBox.dataset.week = String(candidate.weekNumber);
+  schoolImportBox.dataset.url = candidate.url;
+  schoolImportTitle.textContent = candidate.weekNumber + ". heti étlap elérhető.";
+  schoolImportText.textContent = " A PDF már a saját GitHub Pages oldalunkon van. Betöltéskor az alkalmazás feldolgozza, az allergénszámokat elhagyja, majd elmenti az étlapot.";
+  importSchoolMenuButton.textContent = candidate.weekNumber + ". heti étlap betöltése";
+  schoolImportBox.classList.remove("hidden");
+}
+
+async function loadSchoolMenus() {
+  const snapshot = await getDocs(collection(db,"schoolMenus"));
+  schoolMenus = [];
+
+  snapshot.forEach(item => {
+    schoolMenus.push({ id:item.id, ...item.data() });
+  });
+
+  schoolMenus.sort((a,b) => String(a.startDate || "").localeCompare(String(b.startDate || "")));
+  renderSchool();
+  await refreshSchoolImportBox();
+}
+
+async function importAvailableSchoolMenu() {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const weekNumber = Number(schoolImportBox.dataset.week || 0);
+  const url = schoolImportBox.dataset.url || "";
+  if (!weekNumber || !url) return;
+
+  importSchoolMenuButton.disabled = true;
+  importSchoolMenuButton.textContent = "PDF feldolgozása...";
+
+  try {
+    const data = await parseSchoolPdf(url,weekNumber);
+    data.importedAt = serverTimestamp();
+    data.importedBy = user.uid;
+
+    await setDoc(doc(db,"schoolMenus",data.startDate),data);
+    selectedSchoolDate = data.startDate;
+    await loadSchoolMenus();
+  } catch(error) {
+    console.error(error);
+    alert("Az iskolai étlap feldolgozása nem sikerült: " + error.message);
+  } finally {
+    importSchoolMenuButton.disabled = false;
+    await refreshSchoolImportBox();
+  }
+}
+
+function findSchoolMenuForDate(dateKey) {
+  return schoolMenus.find(menu => dateKey >= menu.startDate && dateKey <= menu.endDate);
+}
+
+function getCurrentSchoolMenu() {
+  const today = getTodayKey();
+  const current = findSchoolMenuForDate(today);
+  if (current) return current;
+  if (schoolMenus.length > 0) return schoolMenus[schoolMenus.length - 1];
+  return null;
+}
+
 function getSchoolDayName(dateKey) {
-
   const parts = dateKey.split("-");
-  const date = new Date(
-    Number(parts[0]),
-    Number(parts[1]) - 1,
-    Number(parts[2])
-  );
-
-  const day = date.getDay();
-
-  const names = {
-    1:"Hétfő",
-    2:"Kedd",
-    3:"Szerda",
-    4:"Csütörtök",
-    5:"Péntek",
-    6:"Szombat",
-    0:"Vasárnap"
-  };
-
-  return names[day];
+  const date = new Date(Number(parts[0]),Number(parts[1]) - 1,Number(parts[2]));
+  const names = {1:"Hétfő",2:"Kedd",3:"Szerda",4:"Csütörtök",5:"Péntek",6:"Szombat",0:"Vasárnap"};
+  return names[date.getDay()];
 }
 
 function getSchoolDayShort(dateKey) {
@@ -1640,11 +1719,6 @@ function getSchoolDayShort(dateKey) {
 }
 
 function renderSchool() {
-
-  const has39 = schoolMenus.some(menu => menu.id === "2026-09-21");
-
-  schoolImportBox.classList.toggle("hidden", has39);
-
   const menu = getCurrentSchoolMenu();
 
   if (!menu) {
@@ -1657,55 +1731,36 @@ function renderSchool() {
   schoolContent.classList.remove("hidden");
 
   const dates = Object.keys(menu.days || {}).sort();
-
   if (!selectedSchoolDate || !menu.days[selectedSchoolDate]) {
-
     const today = getTodayKey();
-
-    if (menu.days[today]) {
-      selectedSchoolDate = today;
-    } else {
-      selectedSchoolDate = dates[0];
-    }
+    selectedSchoolDate = menu.days[today] ? today : dates[0];
   }
 
   schoolWeekInfo.innerHTML = "";
-
   const title = document.createElement("div");
   title.className = "schoolWeekTitle";
   title.textContent = menu.weekNumber + ". hét · Általános iskola";
 
   const datesElement = document.createElement("div");
   datesElement.className = "schoolWeekDates";
-  datesElement.textContent =
-    formatDateKey(menu.startDate) + " – " + formatDateKey(menu.endDate);
+  datesElement.textContent = formatDateKey(menu.startDate) + " – " + formatDateKey(menu.endDate);
 
   schoolWeekInfo.appendChild(title);
   schoolWeekInfo.appendChild(datesElement);
-
   renderSchoolDayTabs(menu);
   renderSchoolDay(menu);
 }
 
 function renderSchoolDayTabs(menu) {
-
   schoolDayTabs.innerHTML = "";
-
   const today = getTodayKey();
   const dates = Object.keys(menu.days || {}).sort();
 
   dates.forEach(dateKey => {
-
     const button = document.createElement("button");
     button.className = "schoolDayButton";
-
-    if (dateKey === selectedSchoolDate) {
-      button.classList.add("active");
-    }
-
-    if (dateKey === today) {
-      button.classList.add("today");
-    }
+    if (dateKey === selectedSchoolDate) button.classList.add("active");
+    if (dateKey === today) button.classList.add("today");
 
     const short = document.createElement("span");
     short.className = "schoolDayShort";
@@ -1713,123 +1768,84 @@ function renderSchoolDayTabs(menu) {
 
     const number = document.createElement("span");
     number.className = "schoolDayNumber";
-
-    const parts = dateKey.split("-");
-    number.textContent = Number(parts[2]) + ".";
+    number.textContent = Number(dateKey.split("-")[2]) + ".";
 
     button.appendChild(short);
     button.appendChild(number);
-
-    button.addEventListener("click", () => {
-      selectedSchoolDate = dateKey;
-      renderSchool();
-    });
-
+    button.addEventListener("click", () => { selectedSchoolDate = dateKey; renderSchool(); });
     schoolDayTabs.appendChild(button);
   });
 }
 
 function createNutritionElement(data) {
-
   const element = document.createElement("div");
   element.className = "schoolNutrition";
-
-  element.textContent =
-    "Energia: " + data.energy +
-    " · Fehérje: " + data.protein +
-    " · Zsír: " + data.fat +
-    " · Telített: " + data.saturatedFat +
-    " · Szénhidrát: " + data.carbohydrate +
-    " · Cukor: " + data.sugar +
-    " · Só: " + data.salt;
-
+  const parts = [];
+  if (data.energy) parts.push("Energia: " + data.energy);
+  if (data.protein) parts.push("Fehérje: " + data.protein);
+  if (data.fat) parts.push("Zsír: " + data.fat);
+  if (data.saturatedFat) parts.push("Telített: " + data.saturatedFat);
+  if (data.carbohydrate) parts.push("Szénhidrát: " + data.carbohydrate);
+  if (data.sugar) parts.push("Cukor: " + data.sugar);
+  if (data.salt) parts.push("Só: " + data.salt);
+  element.textContent = parts.join(" · ");
   return element;
 }
 
-function createSchoolMeal(title, icon, mealKey, mealData) {
-
+function createSchoolMeal(title,icon,mealKey,mealData) {
   const profile = childProfiles[selectedChild];
   const childEatsThis = profile[mealKey];
-
   const section = document.createElement("div");
   section.className = "schoolMeal";
-
-  if (!childEatsThis) {
-    section.classList.add("dimmed");
-  }
+  if (!childEatsThis) section.classList.add("dimmed");
 
   const heading = document.createElement("div");
   heading.className = "schoolMealTitle";
   heading.textContent = icon + " " + title;
 
   if (!childEatsThis) {
-
     const label = document.createElement("span");
     label.className = "schoolMealNotEaten";
     label.textContent = selectedChild + " ezt nem eszi az iskolában";
-
     heading.appendChild(label);
   }
 
   section.appendChild(heading);
-
-  (mealData.foods || []).forEach(food => {
-
+  ((mealData && mealData.foods) || []).forEach(food => {
     const line = document.createElement("div");
     line.className = "schoolFoodItem";
     line.textContent = food;
-
     section.appendChild(line);
   });
 
-  if (mealData.nutrition) {
+  if (mealData && mealData.nutrition && Object.keys(mealData.nutrition).length) {
     section.appendChild(createNutritionElement(mealData.nutrition));
   }
-
   return section;
 }
 
 function renderSchoolDay(menu) {
-
   schoolDayContent.innerHTML = "";
-
   const day = menu.days[selectedSchoolDate];
   if (!day) return;
 
   const card = document.createElement("div");
   card.className = "schoolDayCard";
-
   const heading = document.createElement("div");
   heading.className = "schoolDateHeading";
-
-  heading.textContent =
-    getSchoolDayName(selectedSchoolDate) +
-    (selectedSchoolDate === getTodayKey() ? " · MA" : "");
+  heading.textContent = getSchoolDayName(selectedSchoolDate) + (selectedSchoolDate === getTodayKey() ? " · MA" : "");
 
   const childInfo = document.createElement("div");
   childInfo.className = "schoolChildInfo";
-
-  if (selectedChild === "Bence") {
-    childInfo.textContent = "Bence az iskolában csak ebédet eszik.";
-  } else {
-    childInfo.textContent = "Ati az iskolában tízórait, ebédet és uzsonnát is eszik.";
-  }
+  childInfo.textContent = selectedChild === "Bence"
+    ? "Bence az iskolában csak ebédet eszik."
+    : "Ati az iskolában tízórait, ebédet és uzsonnát is eszik.";
 
   card.appendChild(heading);
   card.appendChild(childInfo);
-
-  card.appendChild(
-    createSchoolMeal("Tízórai","🥪","breakfast",day.breakfast)
-  );
-
-  card.appendChild(
-    createSchoolMeal("Ebéd","🍲","lunch",day.lunch)
-  );
-
-  card.appendChild(
-    createSchoolMeal("Uzsonna","🍎","snack",day.snack)
-  );
-
+  card.appendChild(createSchoolMeal("Tízórai","🥪","breakfast",day.breakfast));
+  card.appendChild(createSchoolMeal("Ebéd","🍲","lunch",day.lunch));
+  card.appendChild(createSchoolMeal("Uzsonna","🍎","snack",day.snack));
   schoolDayContent.appendChild(card);
 }
 
@@ -1847,7 +1863,7 @@ atiButton.addEventListener("click", () => {
   renderSchool();
 });
 
-importSchoolMenuButton.addEventListener("click", importSchoolMenu39);
+importSchoolMenuButton.addEventListener("click",importAvailableSchoolMenu);
 
 /* ADATBETÖLTÉS */
 
