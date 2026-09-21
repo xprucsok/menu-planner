@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Bakos PDF CORS teszt</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#f5f6f7; margin:0; padding:24px; color:#222; }
+    .card { max-width:720px; margin:auto; background:white; padding:24px; border-radius:16px; box-shadow:0 2px 12px rgba(0,0,0,.08); }
+    h1 { font-size:22px; margin-top:0; }
+    #result { margin-top:20px; padding:18px; border-radius:12px; background:#f1f3f5; font-size:17px; line-height:1.5; }
+    .ok { background:#eaf7ed !important; }
+    .bad { background:#fdecec !important; }
+    code { word-break:break-all; }
+    button { padding:11px 16px; font-size:16px; border:0; border-radius:10px; cursor:pointer; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h1>Bakos PDF – közvetlen hozzáférés teszt</h1>
+  <p>A teszt megpróbálja a GitHub Pages oldalról JavaScript segítségével letölteni:</p>
+  <p><code>https://bakosestarsai.hu/media/files/etlapok/ka40.pdf</code></p>
+  <button id="run">Teszt újra</button>
+  <div id="result">Tesztelés…</div>
+</div>
+
+<script>
+var pdfUrl = "https://bakosestarsai.hu/media/files/etlapok/ka40.pdf";
+var result = document.getElementById("result");
+
+async function runTest() {
+  result.className = "";
+  result.textContent = "Tesztelés…";
+
+  try {
+    var response = await fetch(pdfUrl, { method: "GET", cache: "no-store" });
+
+    if (!response.ok) {
+      throw new Error("HTTP " + response.status + " " + response.statusText);
+    }
+
+    var blob = await response.blob();
+
+    result.className = "ok";
+    result.innerHTML =
+      "<strong>✅ SIKER</strong><br><br>" +
+      "A GitHub Pages JavaScriptből hozzáfér a Bakos PDF-hez.<br>" +
+      "HTTP státusz: " + response.status + "<br>" +
+      "Típus: " + (blob.type || "nincs megadva") + "<br>" +
+      "Méret: " + Math.round(blob.size / 1024) + " KB";
+  } catch (error) {
+    result.className = "bad";
+    result.innerHTML =
+      "<strong>❌ NEM SIKERÜLT</strong><br><br>" +
+      "A böngésző nem tudta JavaScriptből letölteni a PDF-et.<br><br>" +
+      "<strong>Hiba:</strong> " + String(error) + "<br><br>" +
+      "Ha a PDF külön böngészőfülön ettől még megnyitható, akkor ez nagy valószínűséggel CORS-korlátozás.";
+  }
+}
+
+document.getElementById("run").addEventListener("click", runTest);
+runTest();
+</script>
+</body>
+</html>
