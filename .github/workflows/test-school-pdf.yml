@@ -1,0 +1,43 @@
+name: Test school PDF download
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  download-pdf:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create PDF folder
+        run: mkdir -p school-pdfs
+
+      - name: Download ka40.pdf
+        run: |
+          curl --fail --location \
+            --retry 2 \
+            --output school-pdfs/ka40.pdf \
+            "https://bakosestarsai.hu/media/files/etlapok/ka40.pdf"
+
+      - name: Check downloaded file
+        run: |
+          ls -lh school-pdfs/ka40.pdf
+          file school-pdfs/ka40.pdf
+
+      - name: Commit PDF
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add school-pdfs/ka40.pdf
+
+          if git diff --cached --quiet; then
+            echo "No new file to commit."
+          else
+            git commit -m "Test: download school menu ka40.pdf"
+            git push
+          fi
