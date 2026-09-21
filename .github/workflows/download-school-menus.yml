@@ -1,0 +1,76 @@
+name: Download school menus
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "15 5 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  download-menus:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download current and next week
+        shell: bash
+        run: |
+          mkdir -p school-pdfs
+
+          CURRENT_WEEK=$(date -u +%V)
+          NEXT_WEEK=$(date -u -d "+7 days" +%V)
+
+          CURRENT_WEEK=$((10#$CURRENT_WEEK))
+          NEXT_WEEK=$((10#$NEXT_WEEK))
+
+          echo "Current ISO week: $CURRENT_WEEK"
+          echo "Next ISO week: $NEXT_WEEK"
+
+          for WEEK in "$CURRENT_WEEK" "$NEXT_WEEK"
+          do
+            FILE="school-pdfs/ka${WEEK}.pdf"
+            URL="https://bakosestarsai.hu/media/files/etlapok/ka${WEEK}.pdf"
+
+            if [ -f "$FILE" ]; then
+              echo "ka${WEEK}.pdf already exists - skipping."
+              continue
+            fi
+
+            echo "Trying: $URL"
+
+            if curl --fail --location --silent --show-error \
+              --retry 2 \
+              --output "${FILE}.tmp" \
+              "$URL"
+            then
+              if file "${FILE}.tmp" | grep -qi "PDF"; then
+                mv "${FILE}.tmp" "$FILE"
+                echo "Downloaded ka${WEEK}.pdf successfully."
+              else
+                echo "Response was not a PDF - ignoring."
+                rm -f "${FILE}.tmp"
+              fi
+            else
+              echo "ka${WEEK}.pdf is not available yet."
+              rm -f "${FILE}.tmp"
+            fi
+          done
+
+      - name: Commit new menus
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add school-pdfs/
+
+          if git diff --cached --quiet; then
+            echo "No new school menus."
+          else
+            git commit -m "Add new school menu PDF"
+            git push
+          fi
