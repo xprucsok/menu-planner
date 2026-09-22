@@ -807,14 +807,14 @@ button { cursor: pointer; }
 <body>
 
 <div id="loginView" class="card">
-  <h1>Tóthék Menütervezője</h1>
+  <h1>Menütervező</h1>
   <p id="status">Bejelentkezés ellenőrzése...</p>
   <button id="loginButton" class="hidden">Belépés Google-lel</button>
 </div>
 
 <div id="appView" class="hidden">
 
-<h1>Tóthék Menütervezője</h1>
+<h1>Menütervező</h1>
 
 <div class="userBar">
   Bejelentkezve: <span id="userName"></span>
@@ -2843,7 +2843,10 @@ function openFoodPicker(element,dateKey) {
   selectedDateKey = dateKey;
 
   pickerDate.textContent = formatDateKey(dateKey);
-  pickerSearch.value = "";
+pickerSearch.value = "";
+
+recommendations.innerHTML = "";
+recommendations.classList.add("hidden");
 
   pickerSelectedFoods =
     getMenuFoods(savedMenu[dateKey]).map(item => ({
@@ -2922,6 +2925,10 @@ function renderFoodPickerList() {
     });
 }
 
+recommendFoodButton.addEventListener("click", () => {
+  renderRecommendations();
+});
+  
 pickerSearch.addEventListener("input",renderFoodPickerList);
 closeFoodPicker.addEventListener("click", () => foodPicker.classList.add("hidden"));
 
