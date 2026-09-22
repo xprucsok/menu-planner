@@ -463,6 +463,74 @@ button { cursor: pointer; }
 
 .editFreezerButton { background: #eee; }
 
+  /* AJÁNLÓ */
+
+.recommendButton {
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 14px;
+  background: #fff2c7;
+  color: #553f00;
+  font-weight: bold;
+  font-size: 15px;
+}
+
+.recommendations {
+  margin-bottom: 18px;
+}
+
+.recommendationsTitle {
+  font-weight: bold;
+  margin: 4px 0 10px;
+}
+
+.recommendationCard {
+  background: #fff;
+  border: 1px solid #e4e4e4;
+  border-radius: 13px;
+  padding: 13px;
+  margin-bottom: 9px;
+  cursor: pointer;
+}
+
+.recommendationCard.selected {
+  border: 2px solid #222;
+  background: #f5f5f5;
+}
+
+.recommendationTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.recommendationName {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.recommendationScore {
+  font-size: 11px;
+  color: #888;
+  white-space: nowrap;
+}
+
+.recommendationReasons {
+  margin-top: 7px;
+  color: #666;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.recommendationHint {
+  color: #888;
+  font-size: 11px;
+  margin: 9px 2px 0;
+}
+  
 /* MODAL */
 
 .modal {
@@ -904,6 +972,12 @@ button { cursor: pointer; }
     Több fogást is kiválaszthatsz. A ❄️ jelzi, ha van belőle a fagyasztóban.
   </div>
 
+  <button id="recommendFoodButton" class="recommendButton">
+  ✨ Ajánlj erre a napra!
+</button>
+
+<div id="recommendations" class="recommendations hidden"></div>
+  
   <input id="pickerSearch" class="searchInput" type="search" placeholder="Étel keresése...">
 
   <div id="addFoodFromPicker" class="pickerAction">＋ Új étel hozzáadása</div>
@@ -1142,6 +1216,8 @@ const foodPickerList = byId("foodPickerList");
 const closeFoodPicker = byId("closeFoodPicker");
 const addFoodFromPicker = byId("addFoodFromPicker");
 const saveMenuButton = byId("saveMenuButton");
+const recommendFoodButton = byId("recommendFoodButton");
+const recommendations = byId("recommendations");
 
 const foodFormModal = byId("foodFormModal");
 const foodFormTitle = byId("foodFormTitle");
@@ -1383,6 +1459,300 @@ function getFreezerSummaryForFood(foodId) {
   return Object.keys(grouped)
     .map(unit => grouped[unit] + " " + unit)
     .join(", ");
+}
+
+  /* AJÁNLÓ V1 */
+
+function dateKeyToDate(dateKey) {
+  const parts = String(dateKey || "").split("-");
+
+  if (parts.length !== 3) return null;
+
+  return new Date(
+    Number(parts[0]),
+    Number(parts[1]) - 1,
+    Number(parts[2])
+  );
+}
+
+function daysBetween(dateKeyA,dateKeyB) {
+  const a = dateKeyToDate(dateKeyA);
+  const b = dateKeyToDate(dateKeyB);
+
+  if (!a || !b) return 0;
+
+  return Math.round((b - a) / 86400000);
+}
+
+function getOldestFreezerDate(foodId) {
+  const dates = getFreezerForFood(foodId)
+    .map(item => item.frozenAt)
+    .filter(Boolean)
+    .sort();
+
+  return dates.length ? dates[0] : null;
+}
+
+function getNeighbourMenuFoods(dateKey) {
+  const date = dateKeyToDate(dateKey);
+
+  if (!date) return [];
+
+  const previousKey = getDateKey(addDays(date,-1));
+  const nextKey = getDateKey(addDays(date,1));
+
+  return [
+    ...getMenuFoods(savedMenu[previousKey]),
+    ...getMenuFoods(savedMenu[nextKey])
+  ];
+}
+
+function getFoodTagsById(foodId) {
+  const food = getFoodById(foodId);
+  return food ? parseMultiValue(food.tags) : [];
+}
+
+function getSharedImportantTags(food,otherFoodId) {
+  const ownTags = parseMultiValue(food.tags);
+  const otherTags = getFoodTagsById(otherFoodId);
+
+  const importantTags = [
+    "🐔 csirke",
+    "🐽 sertés",
+    "🐮 marha",
+    "🐟 hal",
+    "húsmentes",
+    "🥕 zöldség",
+    "🥣 leves",
+    "🍝 tészta",
+    "🥔 krumpli",
+    "🍚 rizs",
+    "🍄 gombás",
+    "🍅 paradicsomos"
+  ];
+
+  return ownTags.filter(tag =>
+    importantTags.includes(tag) &&
+    otherTags.includes(tag)
+  );
+}
+
+function scoreFoodForDate(food,dateKey) {
+
+  let score = 0;
+  const reasons = [];
+
+  const freezer = getFreezerForFood(food.id);
+
+  if (freezer.length) {
+
+    score += 5;
+
+    const summary = getFreezerSummaryForFood(food.id);
+
+    reasons.push(
+      "❄️ Van belőle a fagyasztóban" +
+      (summary ? ": " + summary : "")
+    );
+
+    const oldestFrozen = getOldestFreezerDate(food.id);
+
+    if (oldestFrozen) {
+
+      const frozenDays =
+        Math.max(0,daysBetween(oldestFrozen,getTodayKey()));
+
+      if (frozenDays >= 60) {
+        score += 4;
+        reasons.push("🧊 Régi fagyasztott készlet: " + frozenDays + " napos");
+      } else if (frozenDays >= 30) {
+        score += 3;
+        reasons.push("🧊 " + frozenDays + " napja van a fagyasztóban");
+      } else if (frozenDays >= 14) {
+        score += 2;
+        reasons.push("🧊 " + frozenDays + " napja van a fagyasztóban");
+      } else {
+        score += 1;
+      }
+    }
+  }
+
+  const lastEaten = getLastEatenDate(food.id);
+
+  if (!lastEaten) {
+
+    score += 4;
+    reasons.push("✨ Még nem szerepelt a korábbi menüben");
+
+  } else {
+
+    const daysAgo =
+      Math.max(0,daysBetween(lastEaten,getTodayKey()));
+
+    if (daysAgo >= 30) {
+      score += 4;
+      reasons.push("🕐 " + daysAgo + " napja ettük");
+    } else if (daysAgo >= 14) {
+      score += 3;
+      reasons.push("🕐 " + daysAgo + " napja ettük");
+    } else if (daysAgo >= 7) {
+      score += 1;
+      reasons.push("🕐 " + daysAgo + " napja ettük");
+    } else if (daysAgo <= 2) {
+      score -= 8;
+      reasons.push("↩️ Nagyon nemrég ettük");
+    } else {
+      score -= 3;
+      reasons.push("↩️ Nemrég ettük");
+    }
+  }
+
+  const applicability =
+    parseMultiValue(food.applicability)
+      .map(value => normalizeText(value));
+
+  if (applicability.includes("ho")) {
+    score += 2;
+    reasons.push("🏠 HO-ra alkalmas");
+  }
+
+  const neighbours = getNeighbourMenuFoods(dateKey);
+
+  let sameFoodNearby = false;
+  let similarNearby = false;
+
+  neighbours.forEach(item => {
+
+    if (item.foodId === food.id) {
+      sameFoodNearby = true;
+      return;
+    }
+
+    if (
+      item.foodId &&
+      getSharedImportantTags(food,item.foodId).length
+    ) {
+      similarNearby = true;
+    }
+  });
+
+  if (sameFoodNearby) {
+    score -= 10;
+    reasons.push("⚠️ Előző vagy következő napra már ezt terveztük");
+  } else if (similarNearby) {
+    score -= 2;
+    reasons.push("↔️ Szomszédos napon hasonló étel van");
+  } else {
+    score += 2;
+    reasons.push("🌿 Jól változatosítja a környező napokat");
+  }
+
+  return {
+    food:food,
+    score:score,
+    reasons:reasons
+  };
+}
+
+function getFoodRecommendations(dateKey) {
+
+  return availableFoods
+    .map(food => scoreFoodForDate(food,dateKey))
+    .sort((a,b) => {
+
+      if (b.score !== a.score) {
+        return b.score - a.score;
+      }
+
+      return String(a.food.name || "")
+        .localeCompare(String(b.food.name || ""),"hu");
+    })
+    .slice(0,3);
+}
+
+function selectRecommendedFood(food) {
+
+  if (!isPickerFoodSelected(food.id)) {
+    pickerSelectedFoods.push({
+      foodId:food.id,
+      foodName:food.name || ""
+    });
+  }
+
+  renderFoodPickerList();
+  renderRecommendations();
+}
+
+function renderRecommendations() {
+
+  recommendations.innerHTML = "";
+
+  if (!selectedDateKey) {
+    recommendations.classList.add("hidden");
+    return;
+  }
+
+  const results = getFoodRecommendations(selectedDateKey);
+
+  if (!results.length) {
+    recommendations.innerHTML =
+      "<div class=\"emptyMessage\">Most nem találtam ajánlható ételt.</div>";
+
+    recommendations.classList.remove("hidden");
+    return;
+  }
+
+  const title = document.createElement("div");
+  title.className = "recommendationsTitle";
+  title.textContent = "✨ Ezt a hármat próbálnám:";
+  recommendations.appendChild(title);
+
+  results.forEach(result => {
+
+    const food = result.food;
+
+    const card = document.createElement("div");
+    card.className = "recommendationCard";
+
+    if (isPickerFoodSelected(food.id)) {
+      card.classList.add("selected");
+    }
+
+    const top = document.createElement("div");
+    top.className = "recommendationTop";
+
+    const name = document.createElement("div");
+    name.className = "recommendationName";
+    name.textContent = food.name || "Étel";
+
+    const score = document.createElement("div");
+    score.className = "recommendationScore";
+    score.textContent = result.score + " pont";
+
+    top.appendChild(name);
+    top.appendChild(score);
+
+    const reason = document.createElement("div");
+    reason.className = "recommendationReasons";
+    reason.textContent = result.reasons.join(" · ");
+
+    card.appendChild(top);
+    card.appendChild(reason);
+
+    card.addEventListener("click", () => {
+      selectRecommendedFood(food);
+    });
+
+    recommendations.appendChild(card);
+  });
+
+  const hint = document.createElement("div");
+  hint.className = "recommendationHint";
+  hint.textContent =
+    "Koppints egy ajánlatra a kiválasztásához. A Kész gombbal kerül be a menübe.";
+
+  recommendations.appendChild(hint);
+  recommendations.classList.remove("hidden");
 }
 
 /* ISKOLAI MENÜ */
