@@ -1656,18 +1656,84 @@ function scoreFoodForDate(food,dateKey) {
 
 function getFoodRecommendations(dateKey) {
 
-  return availableFoods
+  const scored = availableFoods
     .map(food => scoreFoodForDate(food,dateKey))
     .sort((a,b) => {
-
       if (b.score !== a.score) {
         return b.score - a.score;
       }
 
       return String(a.food.name || "")
         .localeCompare(String(b.food.name || ""),"hu");
-    })
-    .slice(0,3);
+    });
+
+  const results = [];
+
+  // 1. FAGYASZTÓBÓL
+  const freezerChoice = scored.find(result =>
+    getFreezerForFood(result.food.id).length > 0
+  );
+
+  if (freezerChoice) {
+    freezerChoice.category = "❄️ Fagyasztóból";
+    results.push(freezerChoice);
+  }
+
+  // 2. FŐZZÜNK
+  const cookingChoice = scored.find(result =>
+    getFreezerForFood(result.food.id).length === 0 &&
+    !results.some(item => item.food.id === result.food.id)
+  );
+
+  if (cookingChoice) {
+    cookingChoice.category = "🍳 Főzzünk";
+    results.push(cookingChoice);
+  }
+
+  // 3. VALAMI MÁS
+  const usedImportantTags = [];
+
+  results.forEach(result => {
+    parseMultiValue(result.food.tags).forEach(tag => {
+      if ([
+        "🐔 csirke",
+        "🐽 sertés",
+        "🐮 marha",
+        "🐟 hal",
+        "húsmentes",
+        "🍝 tészta",
+        "🥔 krumpli",
+        "🍚 rizs"
+      ].includes(tag)) {
+        usedImportantTags.push(tag);
+      }
+    });
+  });
+
+  let differentChoice = scored.find(result => {
+
+    if (results.some(item => item.food.id === result.food.id)) {
+      return false;
+    }
+
+    const tags = parseMultiValue(result.food.tags);
+
+    return !tags.some(tag => usedImportantTags.includes(tag));
+  });
+
+  // Ha nincs igazán eltérő étel, jöjjön a következő legjobb.
+  if (!differentChoice) {
+    differentChoice = scored.find(result =>
+      !results.some(item => item.food.id === result.food.id)
+    );
+  }
+
+  if (differentChoice) {
+    differentChoice.category = "🎲 Valami más";
+    results.push(differentChoice);
+  }
+
+  return results;
 }
 
 function selectRecommendedFood(food) {
@@ -1722,8 +1788,10 @@ function renderRecommendations() {
     top.className = "recommendationTop";
 
     const name = document.createElement("div");
-    name.className = "recommendationName";
-    name.textContent = food.name || "Étel";
+name.className = "recommendationName";
+name.textContent =
+  (result.category ? result.category + " · " : "") +
+  (food.name || "Étel");
 
     const score = document.createElement("div");
     score.className = "recommendationScore";
