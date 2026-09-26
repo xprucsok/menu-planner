@@ -2099,18 +2099,7 @@ async function findImportableSchoolMenu() {
 
   return null;
 }
-  for (const weekNumber of candidates) {
-    const alreadySaved = schoolMenus.some(menu => Number(menu.weekNumber) === weekNumber);
-    if (alreadySaved) continue;
-
-    const url = getSchoolPdfUrl(weekNumber);
-    if (await pdfExists(url)) {
-      return { weekNumber:weekNumber, url:url };
-    }
-  }
-
-  return null;
-}
+  
 
 async function refreshSchoolImportBox() {
   schoolImportBox.classList.add("hidden");
