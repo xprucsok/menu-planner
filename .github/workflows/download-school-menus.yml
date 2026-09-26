@@ -16,24 +16,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download current and next week
+      - name: Download current and next 3 weeks
         shell: bash
         run: |
           mkdir -p school-pdfs
 
-          CURRENT_WEEK=$(date -u +%V)
-          NEXT_WEEK=$(date -u -d "+7 days" +%V)
-
-          CURRENT_WEEK=$((10#$CURRENT_WEEK))
-          NEXT_WEEK=$((10#$NEXT_WEEK))
-
-          echo "Current ISO week: $CURRENT_WEEK"
-          echo "Next ISO week: $NEXT_WEEK"
-
-          for WEEK in "$CURRENT_WEEK" "$NEXT_WEEK"
+          for OFFSET in 0 7 14 21
           do
+            WEEK=$(date -u -d "+${OFFSET} days" +%V)
+            WEEK=$((10#$WEEK))
+
             FILE="school-pdfs/ka${WEEK}.pdf"
             URL="https://bakosestarsai.hu/media/files/etlapok/ka${WEEK}.pdf"
+
+            echo "Checking ISO week: $WEEK"
 
             if [ -f "$FILE" ]; then
               echo "ka${WEEK}.pdf already exists - skipping."
