@@ -39,7 +39,10 @@ jobs:
             echo "Trying: $URL"
 
             if curl --fail --location --silent --show-error \
-              --retry 2 \
+              --connect-timeout 10 \
+              --max-time 30 \
+              --retry 1 \
+              --retry-delay 2 \
               --output "${FILE}.tmp" \
               "$URL"
             then
