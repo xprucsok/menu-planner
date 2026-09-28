@@ -1683,6 +1683,13 @@ function normalizeText(value) {
   return String(value || "").toLocaleLowerCase("hu");
 }
 
+  function formatShortDate(date) {
+  return new Intl.DateTimeFormat("hu-HU", {
+    month: "2-digit",
+    day: "2-digit"
+  }).format(date);
+}
+  
 function formatDateKey(dateKey) {
   if (!dateKey) return "";
   const parts = dateKey.split("-");
