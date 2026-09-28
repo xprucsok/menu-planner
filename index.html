@@ -2510,20 +2510,36 @@ function getSchoolPdfUrl(weekNumber) {
 
 async function findImportableSchoolMenu() {
 
-  /*
-    IDEIGLENES TESZT:
-    A 41. hetet újra felajánljuk akkor is,
-    ha már szerepel a Firestore-ban.
-  */
+  const iso =
+    getIsoWeekData(new Date());
 
-  const testWeekNumber = 41;
-  const testUrl = getSchoolPdfUrl(testWeekNumber);
+  const candidates = [
+    iso.weekNumber,
+    iso.weekNumber + 1,
+    iso.weekNumber + 2,
+    iso.weekNumber + 3
+  ];
 
-  if (await pdfExists(testUrl)) {
-    return {
-      weekNumber:testWeekNumber,
-      url:testUrl
-    };
+  for (const weekNumber of candidates) {
+
+    const alreadySaved =
+      schoolMenus.some(menu =>
+        Number(menu.weekNumber) === weekNumber
+      );
+
+    if (alreadySaved) {
+      continue;
+    }
+
+    const url =
+      getSchoolPdfUrl(weekNumber);
+
+    if (await pdfExists(url)) {
+      return {
+        weekNumber:weekNumber,
+        url:url
+      };
+    }
   }
 
   return null;
