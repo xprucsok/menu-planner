@@ -1848,212 +1848,655 @@ function normalizePdfWord(text) {
 }
 
 function groupPdfLines(items) {
+
   const sorted = items.slice().sort((a,b) => {
-    if (Math.abs(a.y - b.y) > 2.5) return b.y - a.y;
+
+    if (Math.abs(a.y - b.y) > 2.5) {
+      return b.y - a.y;
+    }
+
     return a.x - b.x;
   });
 
   const lines = [];
+
   sorted.forEach(item => {
-    let line = lines.find(entry => Math.abs(entry.y - item.y) <= 2.5);
+
+    let line = lines.find(entry =>
+      Math.abs(entry.y - item.y) <= 2.5
+    );
+
     if (!line) {
-      line = { y:item.y, items:[] };
+      line = {
+        y:item.y,
+        items:[]
+      };
+
       lines.push(line);
     }
+
     line.items.push(item);
   });
 
-  lines.forEach(line => line.items.sort((a,b) => a.x - b.x));
+  lines.forEach(line =>
+    line.items.sort((a,b) => a.x - b.x)
+  );
+
   lines.sort((a,b) => b.y - a.y);
+
   return lines;
 }
 
+
 function lineText(line) {
-  return cleanSchoolText(line.items.map(item => item.str).join(" "));
+
+  return cleanSchoolText(
+    line.items
+      .map(item => item.str)
+      .join(" ")
+  );
 }
 
-function parseNutritionFromItems(items) {
+
+function isNutritionLabel(text) {
+
+  const value = normalizePdfWord(text);
+
+  return (
+    value.includes("energia") ||
+    value.includes("fehérje") ||
+    value.includes("zsír") ||
+    value.includes("telített") ||
+    value.includes("szénhidrát") ||
+    value.includes("cukor") ||
+    value === "só" ||
+    value.startsWith("só:")
+  );
+}
+
+
+function isNutritionValue(text) {
+
+  const value = cleanSchoolText(text);
+
+  if (!value) return false;
+
+  return /^[0-9]+(?:[,.][0-9]+)?\s*(?:kcal|g)?(?:\s*\/\s*[0-9]+(?:[,.][0-9]+)?\s*g)?$/i.test(value);
+}
+
+
+function isSchoolNoise(text) {
+
+  const value = normalizePdfWord(text);
+
+  if (!value) return true;
+
+  if (
+    value === "tízórai" ||
+    value === "ebéd" ||
+    value === "a menü" ||
+    value === "uzsonna"
+  ) {
+    return true;
+  }
+
+  if (
+    value.includes("jó étvágyat") ||
+    value.includes("allergén tartalm") ||
+    value.includes("keresztszennyez") ||
+    value.includes("étlapváltozás") ||
+    value.includes("beszerzési nehézség") ||
+    value.includes("bakos és társai") ||
+    value.includes("vezető dietetikus") ||
+    value.includes("bt. vezető") ||
+    value.includes("tel.:")
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+
+function parseNutritionFromLines(lines) {
+
   const result = {};
-  const labels = [
-    { key:"energy", tests:["energia"] },
-    { key:"protein", tests:["fehérje"] },
-    { key:"fat", tests:["zsír"] },
-    { key:"saturatedFat", tests:["telített"] },
-    { key:"carbohydrate", tests:["szénhidrát"] },
-    { key:"sugar", tests:["cukor"] },
-    { key:"salt", tests:["só"] }
-  ];
 
-  labels.forEach(label => {
-    const labelItem = items.find(item => {
-      const value = normalizePdfWord(item.str);
-      return label.tests.some(test => value.includes(test));
-    });
+  const allText = lines
+    .map(line => line.items.map(item => item.str).join(" "))
+    .join(" ");
 
-    if (!labelItem) return;
+  const normalized =
+    cleanSchoolText(allText)
+      .replace(/\s*\/\s*/g," / ")
+      .replace(/\s+/g," ");
 
-    const candidates = items.filter(item => {
-      if (item === labelItem) return false;
-      if (item.y >= labelItem.y + 1) return false;
-      if (labelItem.y - item.y > 18) return false;
-      if (Math.abs(item.x - labelItem.x) > 38) return false;
-      return /\d/.test(item.str);
-    }).sort((a,b) => {
-      const da = Math.abs(a.x - labelItem.x) + (labelItem.y - a.y) * 2;
-      const db = Math.abs(b.x - labelItem.x) + (labelItem.y - b.y) * 2;
-      return da - db;
-    });
+  const energy =
+    normalized.match(/energia:\s*([0-9]+(?:[,.][0-9]+)?)\s*kcal/i);
 
-    if (candidates.length) {
-      let value = cleanSchoolText(candidates[0].str);
-      if (value && !/[a-zA-Z]/.test(value)) {
-        value += label.key === "energy" ? " kcal" : " g";
-      }
-      result[label.key] = value;
-    }
-  });
+  const protein =
+    normalized.match(/fehérje:\s*([0-9]+(?:[,.][0-9]+)?)\s*g/i);
 
-  return Object.keys(result).length ? result : null;
+  const fat =
+    normalized.match(/zsír\s*\/\s*telített\s*zs\.?:\s*([0-9]+(?:[,.][0-9]+)?)\s*g\s*\/\s*([0-9]+(?:[,.][0-9]+)?)\s*g/i);
+
+  const carbohydrate =
+    normalized.match(/szénhidrát:\s*([0-9]+(?:[,.][0-9]+)?)\s*g/i);
+
+  const sugar =
+    normalized.match(/cukor:\s*([0-9]+(?:[,.][0-9]+)?)\s*g/i);
+
+  const salt =
+    normalized.match(/só:\s*([0-9]+(?:[,.][0-9]+)?)\s*g/i);
+
+  if (energy) {
+    result.energy = energy[1] + " kcal";
+  }
+
+  if (protein) {
+    result.protein = protein[1] + " g";
+  }
+
+  if (fat) {
+    result.fat = fat[1] + " g";
+    result.saturatedFat = fat[2] + " g";
+  }
+
+  if (carbohydrate) {
+    result.carbohydrate = carbohydrate[1] + " g";
+  }
+
+  if (sugar) {
+    result.sugar = sugar[1] + " g";
+  }
+
+  if (salt) {
+    result.salt = salt[1] + " g";
+  }
+
+  return Object.keys(result).length
+    ? result
+    : null;
 }
 
-function parseMealCell(cellItems) {
+
+function buildMealFromCell(cellItems) {
+
   const lines = groupPdfLines(cellItems);
-  let nutritionY = null;
 
-  lines.forEach(line => {
-    const text = normalizePdfWord(line.items.map(item => item.str).join(" "));
-    if (nutritionY === null && (text.includes("energia") || text.includes("fehérje"))) {
-      nutritionY = line.y;
-    }
-  });
-
-  const foodLines = lines.filter(line => nutritionY === null || line.y > nutritionY + 1);
   const foods = [];
 
-  foodLines.forEach(line => {
-    let text = lineText(line);
+  let nutritionStarted = false;
+
+  lines.forEach(line => {
+
+    const text = lineText(line);
+
     if (!text) return;
 
-    const normalized = normalizePdfWord(text);
-    if (["tízórai","ebéd","a menü","uzsonna"].includes(normalized)) return;
-    if (normalized.includes("energia") || normalized.includes("fehérje") ||
-        normalized.includes("szénhidrát") || normalized.includes("cukor") ||
-        normalized === "zsír" || normalized.includes("telített") || normalized === "só") return;
-
-    if (/^\d+(?:[,.]\d+)?\s*(?:kcal|g)?$/i.test(text)) return;
-
-    if (normalized.startsWith("összetevők")) {
-      if (foods.length) foods[foods.length - 1] += " (" + text + ")";
-      else foods.push(text);
+    if (isNutritionLabel(text)) {
+      nutritionStarted = true;
       return;
     }
 
-    if (foods.length && /^[a-záéíóöőúüű]/.test(text) && text.length < 80) {
-      const previous = foods[foods.length - 1];
-      if (previous.endsWith(",") || previous.endsWith("-") || previous.length > 45) {
-        foods[foods.length - 1] = previous + " " + text;
-        return;
+    if (nutritionStarted) {
+      return;
+    }
+
+    if (isSchoolNoise(text)) {
+      return;
+    }
+
+    if (isNutritionValue(text)) {
+      return;
+    }
+
+    const normalized = normalizePdfWord(text);
+
+    if (normalized.startsWith("összetevők")) {
+
+      if (foods.length) {
+        foods[foods.length - 1] += " (" + text + ")";
       }
+
+      return;
+    }
+
+    /*
+      A Bakos PDF-ben az összetevőlista sokszor
+      egyszerűen zárójelben szerepel.
+    */
+
+    if (
+      text.startsWith("(") &&
+      foods.length
+    ) {
+
+      foods[foods.length - 1] += " " + text;
+      return;
+    }
+
+    /*
+      Ha egy hosszú ételnév több PDF-szövegelemre
+      törik, összerakjuk.
+    */
+
+    if (
+      foods.length &&
+      /^[a-záéíóöőúüű]/.test(text)
+    ) {
+
+      foods[foods.length - 1] += " " + text;
+      return;
     }
 
     foods.push(text);
   });
 
   return {
-    foods: foods,
-    nutrition: parseNutritionFromItems(cellItems)
+    foods:foods,
+    nutrition:parseNutritionFromLines(lines)
   };
 }
 
-async function parseSchoolPdf(url, expectedWeekNumber) {
-  const loadingTask = pdfjsLib.getDocument(url);
-  const pdf = await loadingTask.promise;
-  const page = await pdf.getPage(1);
-  const content = await page.getTextContent();
 
-  const items = content.items
-    .filter(item => String(item.str || "").trim())
-    .map(item => ({
-      str:String(item.str || "").trim(),
-      x:item.transform[4],
-      y:item.transform[5]
-    }));
+async function parseSchoolPdf(url,expectedWeekNumber) {
 
-  const dayLabels = ["Hétfő","Kedd","Szerda","Csütörtök","Péntek"];
-  const dayHeads = dayLabels.map(label => {
-    const found = items.find(item => normalizePdfWord(item.str) === normalizePdfWord(label));
-    if (!found) throw new Error("Nem találom a PDF-ben ezt az oszlopot: " + label);
-    return found;
-  });
+  const loadingTask =
+    pdfjsLib.getDocument(url);
 
-  const mealLabel = word => items.find(item => normalizePdfWord(item.str).includes(word));
-  const breakfastLabel = mealLabel("tízórai");
-  const lunchLabel = mealLabel("ebéd");
-  const snackLabel = mealLabel("uzsonna");
+  const pdf =
+    await loadingTask.promise;
 
-  if (!breakfastLabel || !lunchLabel || !snackLabel) {
-    throw new Error("A PDF étkezési sorai nem ismerhetők fel.");
+  const page =
+    await pdf.getPage(1);
+
+  const content =
+    await page.getTextContent();
+
+  const items =
+    content.items
+      .filter(item =>
+        String(item.str || "").trim()
+      )
+      .map(item => ({
+        str:String(item.str || "").trim(),
+        x:item.transform[4],
+        y:item.transform[5]
+      }));
+
+
+  /*
+    NAPOK FEJLÉCE
+  */
+
+  const dayLabels = [
+    "Hétfő",
+    "Kedd",
+    "Szerda",
+    "Csütörtök",
+    "Péntek"
+  ];
+
+  const dayHeads =
+    dayLabels.map(label => {
+
+      const found =
+        items.find(item =>
+          normalizePdfWord(item.str) ===
+          normalizePdfWord(label)
+        );
+
+      if (!found) {
+        throw new Error(
+          "Nem találom a PDF-ben ezt az oszlopot: " +
+          label
+        );
+      }
+
+      return found;
+    });
+
+
+  /*
+    A NAPI OSZLOPOK HATÁRAI
+
+    Nem egyszerűen az x-koordinátát használjuk,
+    hanem a szomszédos napfejlécek közötti
+    felezőpontot.
+  */
+
+  const centers =
+    dayHeads.map(item => item.x);
+
+  const boundaries = [];
+
+  for (
+    let i = 0;
+    i < centers.length - 1;
+    i++
+  ) {
+
+    boundaries.push(
+      (centers[i] + centers[i + 1]) / 2
+    );
   }
 
-  const allText = items.map(item => item.str).join(" ");
-  const dateMatch = allText.match(/(20\d{2})[.\/-](\d{2})[.\/-](\d{2})\s*[-–]\s*(?:(20\d{2})[.\/-])?(\d{2})[.\/-](\d{2})/);
+
+  function getDayIndex(x) {
+
+    for (
+      let i = 0;
+      i < boundaries.length;
+      i++
+    ) {
+
+      if (x < boundaries[i]) {
+        return i;
+      }
+    }
+
+    return 4;
+  }
+
+
+  /*
+    DÁTUM KIOLVASÁSA
+  */
+
+  const allText =
+    items
+      .map(item => item.str)
+      .join(" ");
+
+  const dateMatch =
+    allText.match(
+      /(20\d{2})[.\/-](\d{2})[.\/-](\d{2})[.]?\s*[-–]\s*(?:(20\d{2})[.\/-])?(\d{2})[.\/-](\d{2})/
+    );
 
   let startDate;
   let endDate;
 
   if (dateMatch) {
-    startDate = dateMatch[1] + "-" + dateMatch[2] + "-" + dateMatch[3];
-    endDate = (dateMatch[4] || dateMatch[1]) + "-" + dateMatch[5] + "-" + dateMatch[6];
+
+    startDate =
+      dateMatch[1] +
+      "-" +
+      dateMatch[2] +
+      "-" +
+      dateMatch[3];
+
+    endDate =
+      (dateMatch[4] || dateMatch[1]) +
+      "-" +
+      dateMatch[5] +
+      "-" +
+      dateMatch[6];
+
   } else {
+
     const now = new Date();
-    const iso = getIsoWeekData(now);
-    const diff = Number(expectedWeekNumber) - iso.weekNumber;
-    const monday = addDays(iso.monday,diff * 7);
-    startDate = getDateKey(monday);
-    endDate = getDateKey(addDays(monday,4));
+
+    const iso =
+      getIsoWeekData(now);
+
+    const diff =
+      Number(expectedWeekNumber) -
+      iso.weekNumber;
+
+    const monday =
+      addDays(
+        iso.monday,
+        diff * 7
+      );
+
+    startDate =
+      getDateKey(monday);
+
+    endDate =
+      getDateKey(
+        addDays(monday,4)
+      );
   }
 
-  const dayCenters = dayHeads.map(item => item.x);
-  const boundaries = [];
-  for (let i = 0; i < dayCenters.length - 1; i++) {
-    boundaries.push((dayCenters[i] + dayCenters[i + 1]) / 2);
-  }
 
-  function dayIndexForX(x) {
-    for (let i = 0; i < boundaries.length; i++) {
-      if (x < boundaries[i]) return i;
+  /*
+    A TÁBLÁZAT SORHATÁRAI
+
+    A PDF-ben a tápértékek minden étkezés
+    alján külön blokként vannak.
+
+    Ezek alapján keressük meg a három
+    étkezési blokkot.
+  */
+
+  const allLines =
+    groupPdfLines(items);
+
+  const nutritionHeaderYs = [];
+
+  allLines.forEach(line => {
+
+    const text =
+      normalizePdfWord(
+        line.items
+          .map(item => item.str)
+          .join(" ")
+      );
+
+    if (
+      text.includes("energia") &&
+      text.includes("fehérje")
+    ) {
+
+      if (
+        !nutritionHeaderYs.some(y =>
+          Math.abs(y - line.y) < 5
+        )
+      ) {
+
+        nutritionHeaderYs.push(line.y);
+      }
     }
-    return 4;
+  });
+
+  nutritionHeaderYs.sort((a,b) => b - a);
+
+  if (nutritionHeaderYs.length < 3) {
+
+    throw new Error(
+      "Nem találom a három tápérték-sort a PDF-ben."
+    );
   }
 
-  function itemsForCell(dayIndex, topY, bottomY) {
+
+  /*
+    A PDF-ben sorrendben:
+
+    tízórai
+    tápérték
+    ebéd
+    tápérték
+    uzsonna
+    tápérték
+  */
+
+  const breakfastNutritionY =
+    nutritionHeaderYs[0];
+
+  const lunchNutritionY =
+    nutritionHeaderYs[1];
+
+  const snackNutritionY =
+    nutritionHeaderYs[2];
+
+
+  /*
+    A napi fejléc alatt kezdődik a tízórai.
+  */
+
+  const tableTop =
+    Math.min(
+      ...dayHeads.map(item => item.y)
+    ) - 2;
+
+
+  /*
+    Egy cellához nemcsak az ételneveket,
+    hanem az alatta lévő tápérték-blokkot
+    is begyűjtjük.
+  */
+
+  function getItemsForDayAndRange(
+    dayIndex,
+    topY,
+    bottomY
+  ) {
+
     return items.filter(item => {
-      if (dayIndexForX(item.x) !== dayIndex) return false;
-      return item.y < topY - 1 && item.y > bottomY + 1;
+
+      if (
+        getDayIndex(item.x) !== dayIndex
+      ) {
+        return false;
+      }
+
+      return (
+        item.y < topY &&
+        item.y > bottomY
+      );
     });
   }
 
-  const startParts = startDate.split("-");
-  const monday = new Date(Number(startParts[0]),Number(startParts[1]) - 1,Number(startParts[2]));
+
+  /*
+    A következő étkezés eleje a megelőző
+    tápérték-blokk ALATT van.
+
+    A nutrition fejléc és az értéksorok között
+    hagyunk helyet.
+  */
+
+  const breakfastBottom =
+    breakfastNutritionY - 28;
+
+  const lunchTop =
+    breakfastBottom;
+
+  const lunchBottom =
+    lunchNutritionY - 28;
+
+  const snackTop =
+    lunchBottom;
+
+  const snackBottom =
+    snackNutritionY - 28;
+
+
+  const startParts =
+    startDate.split("-");
+
+  const monday =
+    new Date(
+      Number(startParts[0]),
+      Number(startParts[1]) - 1,
+      Number(startParts[2])
+    );
+
   const days = {};
 
-  for (let i = 0; i < 5; i++) {
-    const dateKey = getDateKey(addDays(monday,i));
+
+  for (
+    let i = 0;
+    i < 5;
+    i++
+  ) {
+
+    const dateKey =
+      getDateKey(
+        addDays(monday,i)
+      );
+
+
+    /*
+      TÍZÓRAI
+
+      A cellába belevesszük a hozzá tartozó
+      nutrition blokkot is.
+    */
+
+    const breakfastItems =
+      getItemsForDayAndRange(
+        i,
+        tableTop,
+        breakfastBottom
+      );
+
+
+    /*
+      EBÉD
+    */
+
+    const lunchItems =
+      getItemsForDayAndRange(
+        i,
+        lunchTop,
+        lunchBottom
+      );
+
+
+    /*
+      UZSONNA
+    */
+
+    const snackItems =
+      getItemsForDayAndRange(
+        i,
+        snackTop,
+        snackBottom
+      );
+
+
     days[dateKey] = {
-      breakfast: parseMealCell(itemsForCell(i,breakfastLabel.y,lunchLabel.y)),
-      lunch: parseMealCell(itemsForCell(i,lunchLabel.y,snackLabel.y)),
-      snack: parseMealCell(itemsForCell(i,snackLabel.y,35))
+      breakfast:
+        buildMealFromCell(
+          breakfastItems
+        ),
+
+      lunch:
+        buildMealFromCell(
+          lunchItems
+        ),
+
+      snack:
+        buildMealFromCell(
+          snackItems
+        )
     };
   }
 
+
   return {
-    weekNumber:Number(expectedWeekNumber),
-    startDate:startDate,
-    endDate:endDate,
-    schoolType:"Általános iskola",
-    source:"Bakos és Társai Bt.",
-    pdfUrl:url,
-    days:days
+    weekNumber:
+      Number(expectedWeekNumber),
+
+    startDate:
+      startDate,
+
+    endDate:
+      endDate,
+
+    schoolType:
+      "Általános iskola",
+
+    source:
+      "Bakos és Társai Bt.",
+
+    pdfUrl:
+      url,
+
+    days:
+      days
   };
 }
 
