@@ -1689,6 +1689,23 @@ function normalizeText(value) {
     day: "2-digit"
   }).format(date);
 }
+
+function formatDateFromKey(dateKey) {
+  if (!dateKey) return "";
+
+  const parts = dateKey.split("-");
+  const date = new Date(
+    Number(parts[0]),
+    Number(parts[1]) - 1,
+    Number(parts[2])
+  );
+
+  return date.toLocaleDateString("hu-HU", {
+    month:"long",
+    day:"numeric",
+    weekday:"long"
+  });
+}
   
 function formatDateKey(dateKey) {
   if (!dateKey) return "";
