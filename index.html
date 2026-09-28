@@ -1059,6 +1059,8 @@ button { cursor: pointer; }
   <div class="packPlanBox">
     <div class="packPlanHeader">Heti csomagterv</div>
     <div class="packPlanHint">A fiúknak minden nap tervezünk csomagot. Bence ebédhelye külön állítható.</div>
+    <button id="autoPlanPackWeekButton" class="primaryButton" type="button">✨ Tervezz csomagot a hétre</button>
+    <div id="autoPlanPackMessage" class="packPlanHint hidden"></div>
     <div id="packPlanDays"></div>
   </div>
 
@@ -1515,6 +1517,8 @@ const packFormMessage = byId("packFormMessage");
 const editPackFooter = byId("editPackFooter");
 const togglePackActiveButton = byId("togglePackActiveButton");
 const packPlanDays = byId("packPlanDays");
+const autoPlanPackWeekButton = byId("autoPlanPackWeekButton");
+const autoPlanPackMessage = byId("autoPlanPackMessage");
 const previousPackWeekButton = byId("previousPackWeekButton");
 const todayPackWeekButton = byId("todayPackWeekButton");
 const nextPackWeekButton = byId("nextPackWeekButton");
@@ -1683,30 +1687,24 @@ function normalizeText(value) {
   return String(value || "").toLocaleLowerCase("hu");
 }
 
-  function formatShortDate(date) {
+function formatShortDate(date) {
   return new Intl.DateTimeFormat("hu-HU", {
-    month: "2-digit",
-    day: "2-digit"
+    month:"2-digit",
+    day:"2-digit"
   }).format(date);
 }
 
 function formatDateFromKey(dateKey) {
   if (!dateKey) return "";
-
   const parts = dateKey.split("-");
-  const date = new Date(
-    Number(parts[0]),
-    Number(parts[1]) - 1,
-    Number(parts[2])
-  );
-
+  const date = new Date(Number(parts[0]),Number(parts[1]) - 1,Number(parts[2]));
   return date.toLocaleDateString("hu-HU", {
     month:"long",
     day:"numeric",
     weekday:"long"
   });
 }
-  
+
 function formatDateKey(dateKey) {
   if (!dateKey) return "";
   const parts = dateKey.split("-");
@@ -3555,6 +3553,117 @@ async function saveBenceLunchSource(dateKey,value) {
   packPlans[weekKey] = {...current,...data,days:days};
 }
 
+function getAutoPackCandidates(category,child) {
+  return packItems.filter(item => {
+    if (item.active === false) return false;
+    if (item.category !== category) return false;
+    if (item.children && item.children !== "Mindkettő" && item.children !== child) return false;
+    return true;
+  });
+}
+
+function chooseAutoPackItem(category,child,dayIndex,previousId) {
+  const candidates = getAutoPackCandidates(category,child);
+  if (!candidates.length) return null;
+
+  let usable = candidates;
+  if (previousId && candidates.length > 1) {
+    usable = candidates.filter(item => item.id !== previousId);
+    if (!usable.length) usable = candidates;
+  }
+
+  const childOffset = child === "Ati" ? 1 : 0;
+  const index = (dayIndex + childOffset) % usable.length;
+  const item = usable[index];
+  return {packId:item.id,name:item.name,category:item.category};
+}
+
+async function autoPlanPackWeek() {
+  if (!auth.currentUser) return;
+
+  const requiredCategories = ["Tartalmas","Gyümölcs","Magvak"];
+  const missing = requiredCategories.filter(category =>
+    !getAutoPackCandidates(category,"Bence").length ||
+    !getAutoPackCandidates(category,"Ati").length
+  );
+
+  if (missing.length) {
+    autoPlanPackMessage.textContent = "Nem tudok teljes hetet tervezni. Hiányzó kategória: " + missing.join(", ") + ".";
+    autoPlanPackMessage.classList.remove("hidden");
+    return;
+  }
+
+  autoPlanPackWeekButton.disabled = true;
+  autoPlanPackWeekButton.textContent = "Tervezés...";
+  autoPlanPackMessage.classList.add("hidden");
+
+  try {
+    const monday = getPackWeekMonday();
+    const weekKey = getDateKey(monday);
+    const current = packPlans[weekKey] || {};
+    const days = {...(current.days || {})};
+    const previous = {
+      Bence:{Tartalmas:null,Gyümölcs:null,Magvak:null},
+      Ati:{Tartalmas:null,Gyümölcs:null,Magvak:null}
+    };
+    let filled = 0;
+
+    for (let i = 0; i < 5; i++) {
+      const dateKey = getDateKey(addDays(monday,i));
+      const day = {...(days[dateKey] || {})};
+      const children = {...(day.children || {})};
+
+      ["Bence","Ati"].forEach(child => {
+        const existing = Array.isArray(children[child]) ? children[child] : [];
+
+        if (existing.length) {
+          requiredCategories.forEach(category => {
+            const found = existing.find(item => item.category === category);
+            if (found) previous[child][category] = found.packId || null;
+          });
+          return;
+        }
+
+        const planned = [];
+        requiredCategories.forEach(category => {
+          const selected = chooseAutoPackItem(category,child,i,previous[child][category]);
+          if (selected) {
+            planned.push(selected);
+            previous[child][category] = selected.packId;
+          }
+        });
+        children[child] = planned;
+        filled += 1;
+      });
+
+      day.children = children;
+      days[dateKey] = day;
+    }
+
+    const data = {
+      weekStart:weekKey,
+      days:days,
+      updatedAt:serverTimestamp(),
+      updatedBy:auth.currentUser.uid
+    };
+
+    await setDoc(doc(db,"packPlans",weekKey),data,{merge:true});
+    packPlans[weekKey] = {...current,...data,days:days};
+    renderPackPlan();
+
+    autoPlanPackMessage.textContent = filled
+      ? "Kész. " + filled + " üres csomagot kitöltöttem. A már megtervezett csomagokat nem módosítottam."
+      : "Ezen a héten már minden csomag meg van tervezve, ezért nem módosítottam semmit.";
+    autoPlanPackMessage.classList.remove("hidden");
+  } catch(error) {
+    autoPlanPackMessage.textContent = "A heti csomagtervezés nem sikerült: " + error.message;
+    autoPlanPackMessage.classList.remove("hidden");
+  } finally {
+    autoPlanPackWeekButton.disabled = false;
+    autoPlanPackWeekButton.textContent = "✨ Tervezz csomagot a hétre";
+  }
+}
+
 function openPackPlanPicker(dateKey,child) {
   packPickerDateKey = dateKey;
   packPickerChild = child;
@@ -3643,6 +3752,7 @@ nextPackWeekButton.addEventListener("click",() => {
   renderPackPlan();
 });
 
+autoPlanPackWeekButton.addEventListener("click",autoPlanPackWeek);
 closePackPlanPicker.addEventListener("click",closePackPlanEditor);
 packPlanPickerSearch.addEventListener("input",renderPackPlanPickerList);
 savePackPlanButton.addEventListener("click",async () => {
