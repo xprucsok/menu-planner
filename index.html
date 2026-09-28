@@ -1921,7 +1921,16 @@ function isNutritionValue(text) {
 
   if (!value) return false;
 
-  return /^[0-9]+(?:[,.][0-9]+)?\s*(?:kcal|g)?(?:\s*\/\s*[0-9]+(?:[,.][0-9]+)?\s*g)?$/i.test(value);
+  /*
+    Egy vagy több egymás utáni tápérték:
+    50 g
+    265 kcal
+    7 g / 0,1 g
+    50 g 0 g 1,6 g
+    265 kcal 7 g 7 g 0,1 g 44 g
+  */
+
+  return /^(?:[0-9]+(?:[,.][0-9]+)?\s*(?:kcal|g)?\s*(?:\/\s*)?)+$/i.test(value);
 }
 
 
