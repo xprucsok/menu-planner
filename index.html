@@ -2240,18 +2240,18 @@ const january4 =
 const firstIsoMonday =
   getMonday(january4);
 
-const monday =
+const calculatedMonday =
   addDays(
     firstIsoMonday,
     (Number(expectedWeekNumber) - 1) * 7
   );
 
 startDate =
-  getDateKey(monday);
+  getDateKey(calculatedMonday);
 
 endDate =
   getDateKey(
-    addDays(monday,4)
+    addDays(calculatedMonday,4)
   );
 
 
