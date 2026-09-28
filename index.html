@@ -953,6 +953,43 @@ button { cursor: pointer; }
 @media (max-width: 430px) {
   .weekNavigation button { font-size: 11px; }
 }
+
+
+/* NAPI ATTEKINTES */
+.dailyOverview {
+  background: white;
+  border-radius: 18px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+.dailyOverviewHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.dailyOverviewTitle { font-size: 19px; font-weight: bold; }
+.dailyOverviewDate { color: #777; font-size: 13px; margin-top: 3px; }
+.dailyOverviewNav { display: flex; gap: 6px; margin-bottom: 14px; }
+.dailyOverviewNav button { flex: 1; padding: 8px 6px; }
+.overviewSection {
+  border-top: 1px solid #eee;
+  padding: 13px 0;
+}
+.overviewSection:first-of-type { border-top: 0; }
+.overviewSectionTitle { font-weight: bold; margin-bottom: 7px; }
+.overviewMainFood { font-size: 15px; line-height: 1.5; }
+.overviewChildren { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.overviewChildCard { background: #f7f7f7; border-radius: 12px; padding: 11px; }
+.overviewChildName { font-weight: bold; margin-bottom: 8px; }
+.overviewLabel { color: #777; font-size: 11px; margin-top: 8px; margin-bottom: 2px; text-transform: uppercase; letter-spacing: .03em; }
+.overviewValue { font-size: 13px; line-height: 1.45; }
+.overviewEmpty { color: #999; font-style: italic; }
+@media (max-width: 520px) {
+  .overviewChildren { grid-template-columns: 1fr; }
+}
+
 </style>
 </head>
 
@@ -979,6 +1016,21 @@ button { cursor: pointer; }
   <div class="sectionHeader">
     <h2>Menü</h2>
     <p>Hetek között előre és hátra is lapozhatsz</p>
+  </div>
+
+  <div class="dailyOverview">
+    <div class="dailyOverviewHeader">
+      <div>
+        <div class="dailyOverviewTitle">☀️ Napi áttekintés</div>
+        <div id="dailyOverviewDate" class="dailyOverviewDate"></div>
+      </div>
+    </div>
+    <div class="dailyOverviewNav">
+      <button id="previousOverviewDayButton">‹ Előző nap</button>
+      <button id="todayOverviewDayButton" class="todayButton">MA</button>
+      <button id="nextOverviewDayButton">Következő nap ›</button>
+    </div>
+    <div id="dailyOverviewContent"></div>
   </div>
 
   <div class="weekNavigation">
@@ -1486,6 +1538,11 @@ const menuWeeks = byId("menuWeeks");
 const previousWeekButton = byId("previousWeekButton");
 const todayWeekButton = byId("todayWeekButton");
 const nextWeekButton = byId("nextWeekButton");
+const dailyOverviewDate = byId("dailyOverviewDate");
+const dailyOverviewContent = byId("dailyOverviewContent");
+const previousOverviewDayButton = byId("previousOverviewDayButton");
+const todayOverviewDayButton = byId("todayOverviewDayButton");
+const nextOverviewDayButton = byId("nextOverviewDayButton");
 
 const foodCount = byId("foodCount");
 const foodSearch = byId("foodSearch");
@@ -1610,6 +1667,7 @@ let selectedTags = [];
 
 let editingFreezerId = null;
 let calendarWeekOffset = 0;
+let overviewDateOffset = 0;
 
 let schoolMenus = [];
 let selectedChild = "Bence";
@@ -2918,6 +2976,7 @@ async function loadSchoolMenus() {
 
   schoolMenus.sort((a,b) => String(a.startDate || "").localeCompare(String(b.startDate || "")));
   renderSchool();
+  renderDailyOverview();
   await refreshSchoolImportBox();
 }
 
@@ -3532,6 +3591,7 @@ async function savePackDay(dateKey,child,items) {
   await setDoc(doc(db,"packPlans",weekKey),data,{merge:true});
   packPlans[weekKey] = {...current,...data,days:days};
   renderPackPlan();
+  renderDailyOverview();
 }
 
 async function saveBenceLunchSource(dateKey,value) {
@@ -3551,6 +3611,7 @@ async function saveBenceLunchSource(dateKey,value) {
   };
   await setDoc(doc(db,"packPlans",weekKey),data,{merge:true});
   packPlans[weekKey] = {...current,...data,days:days};
+  renderDailyOverview();
 }
 
 function getAutoPackCandidates(category,child) {
@@ -4162,6 +4223,153 @@ saveFreezerButton.addEventListener("click", async () => {
   createMenu();
 });
 
+
+
+/* NAPI ATTEKINTES */
+
+function getOverviewDate() {
+  const date = new Date();
+  date.setHours(0,0,0,0);
+  return addDays(date,overviewDateOffset);
+}
+
+function getPackPlanDayForDate(dateKey) {
+  const parts = dateKey.split("-");
+  const date = new Date(Number(parts[0]),Number(parts[1]) - 1,Number(parts[2]));
+  const weekKey = getDateKey(getMonday(date));
+  const plan = packPlans[weekKey] || {};
+  return ((plan.days || {})[dateKey]) || {};
+}
+
+function getOverviewPackItems(dateKey,child) {
+  const day = getPackPlanDayForDate(dateKey);
+  const children = day.children || {};
+  return Array.isArray(children[child]) ? children[child] : [];
+}
+
+function getBenceLunchSourceForDate(dateKey) {
+  const day = getPackPlanDayForDate(dateKey);
+  if (day.benceLunchSource) return day.benceLunchSource;
+  const parts = dateKey.split("-");
+  const date = new Date(Number(parts[0]),Number(parts[1]) - 1,Number(parts[2]));
+  const jsDay = date.getDay();
+  if (jsDay === 1 || jsDay === 2) return "school";
+  if (jsDay >= 3 && jsDay <= 5) return "alternative";
+  return "none";
+}
+
+function getLunchSourceLabel(value) {
+  if (value === "school") return "🏫 Iskola";
+  if (value === "alternative") return "📍 Másik ebédhely";
+  if (value === "home") return "🏠 Otthonról";
+  return "— Nincs megadva";
+}
+
+function mealFoodsText(meal) {
+  const foods = meal && Array.isArray(meal.foods) ? meal.foods : [];
+  return foods.length ? foods.join(" · ") : "Nincs adat";
+}
+
+function appendOverviewValue(parent,label,value,isEmpty) {
+  const labelElement = document.createElement("div");
+  labelElement.className = "overviewLabel";
+  labelElement.textContent = label;
+  const valueElement = document.createElement("div");
+  valueElement.className = "overviewValue" + (isEmpty ? " overviewEmpty" : "");
+  valueElement.textContent = value;
+  parent.appendChild(labelElement);
+  parent.appendChild(valueElement);
+}
+
+function renderDailyOverview() {
+  if (!dailyOverviewContent || !dailyOverviewDate) return;
+
+  const date = getOverviewDate();
+  const dateKey = getDateKey(date);
+  const todayKey = getTodayKey();
+  dailyOverviewDate.textContent = date.toLocaleDateString("hu-HU",{
+    weekday:"long",year:"numeric",month:"long",day:"numeric"
+  }) + (dateKey === todayKey ? " · MA" : "");
+  dailyOverviewContent.innerHTML = "";
+
+  const familySection = document.createElement("div");
+  familySection.className = "overviewSection";
+  const familyTitle = document.createElement("div");
+  familyTitle.className = "overviewSectionTitle";
+  familyTitle.textContent = "🍲 Otthoni menü";
+  familySection.appendChild(familyTitle);
+  const familyFood = document.createElement("div");
+  familyFood.className = "overviewMainFood";
+  const menuFoods = getMenuFoods(savedMenu[dateKey]);
+  familyFood.textContent = menuFoods.length
+    ? menuFoods.map(item => item.foodName || "Étel").join(" · ")
+    : "Nincs még étel tervezve.";
+  if (!menuFoods.length) familyFood.classList.add("overviewEmpty");
+  familySection.appendChild(familyFood);
+  dailyOverviewContent.appendChild(familySection);
+
+  const childrenSection = document.createElement("div");
+  childrenSection.className = "overviewSection";
+  const childrenTitle = document.createElement("div");
+  childrenTitle.className = "overviewSectionTitle";
+  childrenTitle.textContent = "👦 Fiúk";
+  childrenSection.appendChild(childrenTitle);
+  const grid = document.createElement("div");
+  grid.className = "overviewChildren";
+
+  const schoolMenu = findSchoolMenuForDate(dateKey);
+  const schoolDay = schoolMenu && schoolMenu.days ? schoolMenu.days[dateKey] : null;
+
+  ["Bence","Ati"].forEach(child => {
+    const card = document.createElement("div");
+    card.className = "overviewChildCard";
+    const name = document.createElement("div");
+    name.className = "overviewChildName";
+    name.textContent = child;
+    card.appendChild(name);
+
+    if (child === "Bence") {
+      const source = getBenceLunchSourceForDate(dateKey);
+      appendOverviewValue(card,"Ebéd helye",getLunchSourceLabel(source),false);
+      if (source === "school") {
+        appendOverviewValue(card,"Iskolai ebéd",schoolDay ? mealFoodsText(schoolDay.lunch) : "Nincs iskolai étlap erre a napra",!schoolDay);
+      }
+    } else {
+      if (schoolDay) {
+        appendOverviewValue(card,"Tízórai",mealFoodsText(schoolDay.breakfast),false);
+        appendOverviewValue(card,"Ebéd",mealFoodsText(schoolDay.lunch),false);
+        appendOverviewValue(card,"Uzsonna",mealFoodsText(schoolDay.snack),false);
+      } else {
+        appendOverviewValue(card,"Iskola","Nincs iskolai étlap erre a napra",true);
+      }
+    }
+
+    const packed = getOverviewPackItems(dateKey,child);
+    const packedText = packed.length ? packed.map(getPackItemName).join(" · ") : "Nincs még csomag tervezve.";
+    appendOverviewValue(card,"🎒 Csomag",packedText,!packed.length);
+    grid.appendChild(card);
+  });
+
+  childrenSection.appendChild(grid);
+  dailyOverviewContent.appendChild(childrenSection);
+}
+
+previousOverviewDayButton.addEventListener("click",() => {
+  overviewDateOffset -= 1;
+  renderDailyOverview();
+});
+
+todayOverviewDayButton.addEventListener("click",() => {
+  overviewDateOffset = 0;
+  renderDailyOverview();
+});
+
+nextOverviewDayButton.addEventListener("click",() => {
+  overviewDateOffset += 1;
+  renderDailyOverview();
+});
+
+
 /* MENÜ */
 
 function renderDayFoods(container,dateKey) {
@@ -4208,6 +4416,7 @@ function renderDayFoods(container,dateKey) {
 
 function createMenu() {
 
+  renderDailyOverview();
   menuWeeks.innerHTML = "";
 
   const today = new Date();
@@ -4669,6 +4878,7 @@ function setView(view) {
 
 menuNavButton.addEventListener("click", () => {
   setView({container:menuView,button:menuNavButton});
+  renderDailyOverview();
 });
 
 schoolNavButton.addEventListener("click", () => {
