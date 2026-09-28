@@ -2523,30 +2523,21 @@ function getSchoolPdfUrl(weekNumber) {
 }
 
 async function findImportableSchoolMenu() {
-  const iso = getIsoWeekData(new Date());
 
-  const candidates = [
-    iso.weekNumber,
-    iso.weekNumber + 1,
-    iso.weekNumber + 2,
-    iso.weekNumber + 3
-  ];
+  /*
+    IDEIGLENES TESZT:
+    A 40. hetet újra felajánljuk akkor is,
+    ha már szerepel a Firestore-ban.
+  */
 
-  for (const weekNumber of candidates) {
-    const alreadySaved = schoolMenus.some(menu =>
-      Number(menu.weekNumber) === weekNumber
-    );
+  const testWeekNumber = 40;
+  const testUrl = getSchoolPdfUrl(testWeekNumber);
 
-    if (alreadySaved) continue;
-
-    const url = getSchoolPdfUrl(weekNumber);
-
-    if (await pdfExists(url)) {
-      return {
-        weekNumber:weekNumber,
-        url:url
-      };
-    }
+  if (await pdfExists(testUrl)) {
+    return {
+      weekNumber:testWeekNumber,
+      url:testUrl
+    };
   }
 
   return null;
