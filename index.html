@@ -28,7 +28,8 @@ button { cursor: pointer; }
 .card,
 .foodCard,
 .freezerCard,
-.schoolDayCard {
+.schoolDayCard,
+.packCard {
   background: white;
   border-radius: 16px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.06);
@@ -748,6 +749,61 @@ button { cursor: pointer; }
   color: #777;
 }
 
+
+/* CSOMAG */
+
+.packToolbar {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0 16px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.packFilterButton {
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: #eee;
+  color: #444;
+}
+
+.packFilterButton.active {
+  background: #222;
+  color: white;
+  font-weight: bold;
+}
+
+.packCard {
+  padding: 15px 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.packCard.inactive { opacity: 0.55; }
+
+.packCardTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.packName { font-weight: bold; }
+.packMeta { color: #777; font-size: 13px; margin-top: 6px; }
+.packStock { font-weight: bold; white-space: nowrap; }
+
+.packEmptyBox {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  color: #666;
+}
+
+.packEmptyBox button { margin-top: 12px; }
+
 /* NAV */
 
 .bottomNav {
@@ -883,6 +939,38 @@ button { cursor: pointer; }
 
 </div>
 
+
+<!-- CSOMAG -->
+
+<div id="packView" class="hidden">
+
+  <div class="sectionHeader">
+    <div class="sectionHeaderRow">
+      <div>
+        <h2>🎒 Csomag</h2>
+        <p id="packCount">Mit tudunk csomagolni a fiúknak?</p>
+      </div>
+      <button id="addPackButton" class="primaryButton">＋ Új</button>
+    </div>
+  </div>
+
+  <input id="packSearch" class="searchInput" type="search"
+    placeholder="Keresés a csomagolható dolgok között...">
+
+  <div id="packFilters" class="packToolbar">
+    <button class="packFilterButton active" data-pack-filter="Mind">Mind</button>
+    <button class="packFilterButton" data-pack-filter="Tartalmas">🥪 Tartalmas</button>
+    <button class="packFilterButton" data-pack-filter="Gyümölcs">🍎 Gyümölcs</button>
+    <button class="packFilterButton" data-pack-filter="Magvak">🥜 Magvak</button>
+    <button class="packFilterButton" data-pack-filter="Extra">✨ Extra</button>
+  </div>
+
+  <p id="loadingPack">Csomagolható dolgok betöltése...</p>
+  <p id="packError" class="hidden"></p>
+  <div id="packList"></div>
+
+</div>
+
 <!-- ÉTELEK -->
 
 <div id="foodsView" class="hidden">
@@ -939,7 +1027,11 @@ button { cursor: pointer; }
     </button>
 
     <button id="schoolNavButton" class="navButton">
-      <span class="navIcon">🎒</span>Iskola
+      <span class="navIcon">🏫</span>Iskola
+    </button>
+
+    <button id="packNavButton" class="navButton">
+      <span class="navIcon">🎒</span>Csomag
     </button>
 
     <button id="foodsNavButton" class="navButton">
@@ -987,6 +1079,69 @@ button { cursor: pointer; }
   <div class="pickerFooter">
     <button id="saveMenuButton" class="pickerSaveButton">Kész</button>
   </div>
+
+</div>
+</div>
+
+
+<!-- CSOMAG FORM -->
+
+<div id="packFormModal" class="modal hidden">
+<div class="modalContent">
+
+<div class="modalHeader">
+  <div id="packFormTitle" class="modalTitle">Új csomagolható</div>
+  <button id="closePackForm" class="closeButton">✕</button>
+</div>
+
+<div class="formGroup">
+  <label class="formLabel">Név *</label>
+  <input id="packNameInput" class="formInput" type="text" placeholder="pl. Csirkés tortilla">
+</div>
+
+<div class="formGroup">
+  <label class="formLabel">Kategória *</label>
+  <select id="packCategoryInput" class="formInput">
+    <option value="Tartalmas">🥪 Tartalmas</option>
+    <option value="Gyümölcs">🍎 Gyümölcs</option>
+    <option value="Magvak">🥜 Magvak</option>
+    <option value="Extra">✨ Extra</option>
+  </select>
+</div>
+
+<div class="formGroup">
+  <label class="formLabel">Kinek?</label>
+  <select id="packChildrenInput" class="formInput">
+    <option value="Mindkettő">Mindkettő</option>
+    <option value="Bence">Bence</option>
+    <option value="Ati">Ati</option>
+  </select>
+</div>
+
+<div class="formGroup">
+  <label class="formLabel">Készlet (opcionális)</label>
+  <div class="addValueRow">
+    <input id="packQuantityInput" class="formInput quantityInput" type="number" min="0" step="0.1" placeholder="pl. 5">
+    <input id="packUnitInput" class="formInput unitInput" type="text" placeholder="db / adag / doboz">
+  </div>
+  <div class="packMeta">Hagyd üresen, ha nem szeretnéd készletként követni.</div>
+</div>
+
+<div class="formGroup">
+  <label class="formLabel">Megjegyzés</label>
+  <textarea id="packNoteInput" class="formTextarea" placeholder="pl. előző este elkészíthető"></textarea>
+</div>
+
+<div id="packFormMessage" class="formMessage hidden"></div>
+
+<div class="formButtons">
+  <button id="cancelPackButton" class="secondaryButton">Mégse</button>
+  <button id="savePackButton" class="primaryButton">Mentés</button>
+</div>
+
+<div id="editPackFooter" class="editFooter hidden">
+  <button id="togglePackActiveButton" class="dangerButton fullButton"></button>
+</div>
 
 </div>
 </div>
@@ -1182,11 +1337,13 @@ const userName = byId("userName");
 
 const menuView = byId("menuView");
 const schoolView = byId("schoolView");
+const packView = byId("packView");
 const foodsView = byId("foodsView");
 const freezerView = byId("freezerView");
 
 const menuNavButton = byId("menuNavButton");
 const schoolNavButton = byId("schoolNavButton");
+const packNavButton = byId("packNavButton");
 const foodsNavButton = byId("foodsNavButton");
 const freezerNavButton = byId("freezerNavButton");
 
@@ -1201,6 +1358,29 @@ const foodList = byId("foodList");
 const loadingFoods = byId("loadingFoods");
 const foodError = byId("foodError");
 const addFoodButton = byId("addFoodButton");
+
+
+const packCount = byId("packCount");
+const packSearch = byId("packSearch");
+const packList = byId("packList");
+const loadingPack = byId("loadingPack");
+const packError = byId("packError");
+const addPackButton = byId("addPackButton");
+const packFilters = byId("packFilters");
+const packFormModal = byId("packFormModal");
+const packFormTitle = byId("packFormTitle");
+const closePackForm = byId("closePackForm");
+const cancelPackButton = byId("cancelPackButton");
+const savePackButton = byId("savePackButton");
+const packNameInput = byId("packNameInput");
+const packCategoryInput = byId("packCategoryInput");
+const packChildrenInput = byId("packChildrenInput");
+const packQuantityInput = byId("packQuantityInput");
+const packUnitInput = byId("packUnitInput");
+const packNoteInput = byId("packNoteInput");
+const packFormMessage = byId("packFormMessage");
+const editPackFooter = byId("editPackFooter");
+const togglePackActiveButton = byId("togglePackActiveButton");
 
 const freezerCount = byId("freezerCount");
 const freezerSearch = byId("freezerSearch");
@@ -2817,6 +2997,244 @@ atiButton.addEventListener("click", () => {
 
 importSchoolMenuButton.addEventListener("click",importAvailableSchoolMenu);
 
+
+let packItems = [];
+let editingPackId = null;
+let packCategoryFilter = "Mind";
+
+function getPackCategoryIcon(category) {
+  if (category === "Tartalmas") return "🥪";
+  if (category === "Gyümölcs") return "🍎";
+  if (category === "Magvak") return "🥜";
+  if (category === "Extra") return "✨";
+  return "🎒";
+}
+
+async function loadPackItems() {
+  loadingPack.classList.remove("hidden");
+  packError.classList.add("hidden");
+
+  try {
+    const snapshot = await getDocs(collection(db,"packables"));
+    packItems = [];
+
+    snapshot.forEach(item => {
+      packItems.push({id:item.id,...item.data()});
+    });
+
+    packItems.sort((a,b) =>
+      String(a.name || "").localeCompare(String(b.name || ""),"hu")
+    );
+
+    loadingPack.classList.add("hidden");
+    renderPackList();
+  } catch(error) {
+    loadingPack.classList.add("hidden");
+    packError.textContent = "A csomaglista betöltése nem sikerült: " + error.message;
+    packError.classList.remove("hidden");
+  }
+}
+
+function renderPackList() {
+  const search = String(packSearch.value || "").trim().toLocaleLowerCase("hu");
+  packList.innerHTML = "";
+
+  const visible = packItems.filter(item => {
+    if (packCategoryFilter !== "Mind" && item.category !== packCategoryFilter) return false;
+    const searchable = [item.name,item.category,item.children,item.note,item.unit].join(" ").toLocaleLowerCase("hu");
+    return !search || searchable.includes(search);
+  });
+
+  const activeCount = packItems.filter(item => item.active !== false).length;
+  packCount.textContent = activeCount + " aktív csomagolható dolog";
+
+  if (!packItems.length) {
+    const box = document.createElement("div");
+    box.className = "packEmptyBox";
+    box.innerHTML = "Még nincs csomagolható dolog az adatbázisban.<br>";
+    const seedButton = document.createElement("button");
+    seedButton.className = "primaryButton";
+    seedButton.textContent = "Kezdőlista létrehozása";
+    seedButton.addEventListener("click",seedPackItems);
+    box.appendChild(seedButton);
+    packList.appendChild(box);
+    return;
+  }
+
+  if (!visible.length) {
+    const empty = document.createElement("div");
+    empty.className = "emptyMessage";
+    empty.textContent = "Nincs találat.";
+    packList.appendChild(empty);
+    return;
+  }
+
+  visible.forEach(item => {
+    const card = document.createElement("div");
+    card.className = "packCard" + (item.active === false ? " inactive" : "");
+
+    const top = document.createElement("div");
+    top.className = "packCardTop";
+
+    const left = document.createElement("div");
+    const name = document.createElement("div");
+    name.className = "packName";
+    name.textContent = getPackCategoryIcon(item.category) + " " + (item.name || "Névtelen");
+    left.appendChild(name);
+
+    const meta = document.createElement("div");
+    meta.className = "packMeta";
+    meta.textContent = (item.category || "") + " · " + (item.children || "Mindkettő") + (item.active === false ? " · inaktív" : "");
+    left.appendChild(meta);
+
+    if (item.note) {
+      const note = document.createElement("div");
+      note.className = "packMeta";
+      note.textContent = item.note;
+      left.appendChild(note);
+    }
+
+    top.appendChild(left);
+
+    if (item.quantity !== null && item.quantity !== undefined && item.quantity !== "") {
+      const stock = document.createElement("div");
+      stock.className = "packStock";
+      stock.textContent = String(item.quantity) + (item.unit ? " " + item.unit : "");
+      top.appendChild(stock);
+    }
+
+    card.appendChild(top);
+    card.addEventListener("click",() => openPackForm(item));
+    packList.appendChild(card);
+  });
+}
+
+function openPackForm(item) {
+  editingPackId = item ? item.id : null;
+  packFormTitle.textContent = item ? "Csomagolható szerkesztése" : "Új csomagolható";
+  packNameInput.value = item ? (item.name || "") : "";
+  packCategoryInput.value = item ? (item.category || "Tartalmas") : "Tartalmas";
+  packChildrenInput.value = item ? (item.children || "Mindkettő") : "Mindkettő";
+  packQuantityInput.value = item && item.quantity !== null && item.quantity !== undefined ? item.quantity : "";
+  packUnitInput.value = item ? (item.unit || "") : "";
+  packNoteInput.value = item ? (item.note || "") : "";
+  packFormMessage.classList.add("hidden");
+  editPackFooter.classList.toggle("hidden",!item);
+
+  if (item) {
+    togglePackActiveButton.textContent = item.active === false ? "Újra aktiválás" : "Inaktiválás";
+  }
+
+  packFormModal.classList.remove("hidden");
+}
+
+function closePackEditor() {
+  packFormModal.classList.add("hidden");
+  editingPackId = null;
+}
+
+async function savePackItem() {
+  const name = packNameInput.value.trim();
+  if (!name) {
+    packFormMessage.textContent = "Adj nevet a csomagolható dolognak.";
+    packFormMessage.classList.remove("hidden");
+    return;
+  }
+
+  const quantityText = packQuantityInput.value.trim();
+  const data = {
+    name:name,
+    category:packCategoryInput.value,
+    children:packChildrenInput.value,
+    quantity:quantityText === "" ? null : Number(quantityText),
+    unit:packUnitInput.value.trim(),
+    note:packNoteInput.value.trim(),
+    updatedAt:serverTimestamp(),
+    updatedBy:auth.currentUser ? auth.currentUser.uid : ""
+  };
+
+  if (editingPackId) {
+    await updateDoc(doc(db,"packables",editingPackId),data);
+  } else {
+    data.active = true;
+    data.createdAt = serverTimestamp();
+    data.createdBy = auth.currentUser ? auth.currentUser.uid : "";
+    await addDoc(collection(db,"packables"),data);
+  }
+
+  closePackEditor();
+  await loadPackItems();
+}
+
+async function seedPackItems() {
+  const starters = [
+    ["Melegszendvics","Tartalmas"],
+    ["Hideg szendvics","Tartalmas"],
+    ["Csirkés tortilla","Tartalmas"],
+    ["Alma","Gyümölcs"],
+    ["Körte","Gyümölcs"],
+    ["Banán","Gyümölcs"],
+    ["Idénygyümölcs","Gyümölcs"],
+    ["Pisztácia","Magvak"],
+    ["Földimogyoró","Magvak"],
+    ["Dió","Magvak"],
+    ["Kesudió","Magvak"],
+    ["Mandula","Magvak"],
+    ["Magkeverék","Magvak"],
+    ["Bundázott magvak","Magvak"],
+    ["Lekváros kifli","Extra"],
+    ["Kakaós csiga","Extra"],
+    ["Túrós táska","Extra"]
+  ];
+
+  if (packItems.length) return;
+
+  for (const starter of starters) {
+    await addDoc(collection(db,"packables"),{
+      name:starter[0],
+      category:starter[1],
+      children:"Mindkettő",
+      quantity:null,
+      unit:"",
+      note:"",
+      active:true,
+      createdAt:serverTimestamp(),
+      createdBy:auth.currentUser ? auth.currentUser.uid : "",
+      updatedAt:serverTimestamp(),
+      updatedBy:auth.currentUser ? auth.currentUser.uid : ""
+    });
+  }
+
+  await loadPackItems();
+}
+
+packSearch.addEventListener("input",renderPackList);
+addPackButton.addEventListener("click",() => openPackForm(null));
+closePackForm.addEventListener("click",closePackEditor);
+cancelPackButton.addEventListener("click",closePackEditor);
+savePackButton.addEventListener("click",savePackItem);
+
+packFilters.addEventListener("click",event => {
+  const button = event.target.closest("[data-pack-filter]");
+  if (!button) return;
+  packCategoryFilter = button.dataset.packFilter;
+  packFilters.querySelectorAll(".packFilterButton").forEach(item => item.classList.remove("active"));
+  button.classList.add("active");
+  renderPackList();
+});
+
+togglePackActiveButton.addEventListener("click",async () => {
+  const item = packItems.find(entry => entry.id === editingPackId);
+  if (!item) return;
+  await updateDoc(doc(db,"packables",editingPackId),{
+    active:item.active === false,
+    updatedAt:serverTimestamp(),
+    updatedBy:auth.currentUser ? auth.currentUser.uid : ""
+  });
+  closePackEditor();
+  await loadPackItems();
+});
+
 /* ADATBETÖLTÉS */
 
 async function loadSavedMenu() {
@@ -3709,11 +4127,13 @@ function setView(view) {
 
   menuView.classList.add("hidden");
   schoolView.classList.add("hidden");
+  packView.classList.add("hidden");
   foodsView.classList.add("hidden");
   freezerView.classList.add("hidden");
 
   menuNavButton.classList.remove("active");
   schoolNavButton.classList.remove("active");
+  packNavButton.classList.remove("active");
   foodsNavButton.classList.remove("active");
   freezerNavButton.classList.remove("active");
 
@@ -3728,6 +4148,11 @@ menuNavButton.addEventListener("click", () => {
 schoolNavButton.addEventListener("click", () => {
   setView({container:schoolView,button:schoolNavButton});
   renderSchool();
+});
+
+packNavButton.addEventListener("click", () => {
+  setView({container:packView,button:packNavButton});
+  renderPackList();
 });
 
 foodsNavButton.addEventListener("click", () => {
@@ -3778,6 +4203,7 @@ onAuthStateChanged(auth, async user => {
 
     await loadSavedMenu();
     await loadFoods();
+    await loadPackItems();
     await loadFreezer();
     await loadSchoolMenus();
 
