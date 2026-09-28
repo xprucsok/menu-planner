@@ -2224,49 +2224,37 @@ async function parseSchoolPdf(url,expectedWeekNumber) {
     );
 
   let startDate;
-  let endDate;
+let endDate;
 
-  if (dateMatch) {
+/*
+  A hét dátumát nem a PDF fejlécéből vesszük,
+  mert abban előfordulhat elírás.
 
-    startDate =
-      dateMatch[1] +
-      "-" +
-      dateMatch[2] +
-      "-" +
-      dateMatch[3];
+  Az importált hét száma a megbízható adat.
+*/
 
-    endDate =
-      (dateMatch[4] || dateMatch[1]) +
-      "-" +
-      dateMatch[5] +
-      "-" +
-      dateMatch[6];
+const now = new Date();
 
-  } else {
+const iso =
+  getIsoWeekData(now);
 
-    const now = new Date();
+const diff =
+  Number(expectedWeekNumber) -
+  iso.weekNumber;
 
-    const iso =
-      getIsoWeekData(now);
+const monday =
+  addDays(
+    iso.monday,
+    diff * 7
+  );
 
-    const diff =
-      Number(expectedWeekNumber) -
-      iso.weekNumber;
+startDate =
+  getDateKey(monday);
 
-    const monday =
-      addDays(
-        iso.monday,
-        diff * 7
-      );
-
-    startDate =
-      getDateKey(monday);
-
-    endDate =
-      getDateKey(
-        addDays(monday,4)
-      );
-  }
+endDate =
+  getDateKey(
+    addDays(monday,4)
+  );
 
 
   /*
