@@ -2223,29 +2223,27 @@ async function parseSchoolPdf(url,expectedWeekNumber) {
       /(20\d{2})[.\/-](\d{2})[.\/-](\d{2})[.]?\s*[-–]\s*(?:(20\d{2})[.\/-])?(\d{2})[.\/-](\d{2})/
     );
 
-  let startDate;
+ let startDate;
 let endDate;
 
 /*
-  A hét dátumát nem a PDF fejlécéből vesszük,
-  mert abban előfordulhat elírás.
-
-  Az importált hét száma a megbízható adat.
+  Az importált hét száma alapján számoljuk ki
+  a dátumot. A PDF-ben lévő évszám lehet hibás.
 */
 
-const now = new Date();
+const currentYear =
+  new Date().getFullYear();
 
-const iso =
-  getIsoWeekData(now);
+const january4 =
+  new Date(currentYear,0,4);
 
-const diff =
-  Number(expectedWeekNumber) -
-  iso.weekNumber;
+const firstIsoMonday =
+  getMonday(january4);
 
 const monday =
   addDays(
-    iso.monday,
-    diff * 7
+    firstIsoMonday,
+    (Number(expectedWeekNumber) - 1) * 7
   );
 
 startDate =
